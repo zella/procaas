@@ -1,11 +1,10 @@
-import fastily.jwiki.core.Wiki
+package org.zella.pyass
+
+import org.zella.pyass.net.HttpServer
 
 object Runner {
   def main(args: Array[String]): Unit = {
     print("Hello world")
-
-
-    import fastily.jwiki.core.NS
 
    // val wiki= new Wiki("ru.wikipedia.org")
 //    val p = wiki.getRandomPages(5, NS.MAIN)

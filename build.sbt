@@ -1,6 +1,6 @@
-name := "proto"
+name := "pyass"
 
-version := "0.1"
+version := "0.1-SNAPSHOT"
 
 scalaVersion := "2.12.8"
 
@@ -16,3 +16,9 @@ libraryDependencies += "com.typesafe" % "config" % "1.3.3"
 libraryDependencies += "io.vertx" %% "vertx-lang-scala-stack" % "3.6.2" % "provided" pomOnly()
 // https://mvnrepository.com/artifact/io.vertx/vertx-web-scala
 libraryDependencies += "io.vertx" %% "vertx-web-scala" % "3.6.2"
+// https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.8.1"
+// https://mvnrepository.com/artifact/com.typesafe.scala-logging/scala-logging
+libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
+// https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
+libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3" 

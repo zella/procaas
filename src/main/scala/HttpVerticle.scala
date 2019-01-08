@@ -3,6 +3,7 @@ import io.vertx.scala.ext.web.Router
 
 import scala.concurrent.Future
 
+//TODO sample, remove it
 class HttpVerticle extends ScalaVerticle {
 
 
