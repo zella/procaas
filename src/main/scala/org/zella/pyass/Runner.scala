@@ -1,21 +1,24 @@
 package org.zella.pyass
 
+import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.LazyLogging
+import org.zella.pyass.config.impl.TypesafeConfig
 import org.zella.pyass.net.HttpServer
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.Await
 
-object Runner {
+object Runner extends LazyLogging {
+
   def main(args: Array[String]): Unit = {
-    print("Hello world")
 
-   // val wiki= new Wiki("ru.wikipedia.org")
-//    val p = wiki.getRandomPages(5, NS.MAIN)
-//
-//
-//   val t = wiki.getPageText("GitHub")
-//   println(p)
+    val config = new TypesafeConfig(ConfigFactory.load())
 
+    val started = new HttpServer(config).startFuture()
+    started.foreach(port => logger.info(s"Server started at port $port"))
 
-   // val txt = wiki.getTextExtract("Беннетт, Тони")
-   // println("end")
-    new HttpServer().startFuture()
+    Await.result(started, 30.seconds)
+
   }
 }
+
