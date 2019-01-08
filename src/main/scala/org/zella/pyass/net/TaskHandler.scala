@@ -17,12 +17,13 @@ class TaskHandler(ex: ExecutorWith[_ <: WriteResponse]) extends Handler[RoutingC
   override def handle(ctx: RoutingContext): Unit = {
     Task.fromTry(ExecutionParams.fromRequest(ctx.request()))
       .flatMap(ep => if (ep.isBlocking) ex.executeBlocking(ep.timeout) else ex.execute(ep.timeout))
+      //.executeOn()
       .flatMap(v => Task(v.write(ctx.response())))
       .onErrorRecover {
         case e =>
           logger.error("Failure", e) //TODO ?
-          ctx.response().end(s"${ExceptionUtils.getStackTrace(e)}")
-      }
+          ctx.response().end(ExceptionUtils.getStackTrace(e))
+      }.runAsyncAndForget(monix.execution.Scheduler.Implicits.global)
   }
 }
 
