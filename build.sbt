@@ -4,6 +4,14 @@ version := "0.1-SNAPSHOT"
 
 scalaVersion := "2.12.8"
 
+// META-INF discarding
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+  case x => MergeStrategy.last
+}
+
+mainClass in assembly := Some("org.zella.pyass.Runner")
+
 resolvers += "jwiki" at "https://dl.bintray.com/fastily/maven"
 
 // https://mvnrepository.com/artifact/fastily/jwiki
