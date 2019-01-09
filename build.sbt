@@ -29,4 +29,10 @@ libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.8.1"
 // https://mvnrepository.com/artifact/com.typesafe.scala-logging/scala-logging
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3" 
+libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
+// https://mvnrepository.com/artifact/org.apache.commons/commons-text
+libraryDependencies += "org.apache.commons" % "commons-text" % "1.6" //https://stackoverflow.com/a/52695352/1996639
+// https://mvnrepository.com/artifact/org.scalatest/scalatest
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % Test
+// https://mvnrepository.com/artifact/org.mockito/mockito-scala
+libraryDependencies += "org.mockito" %% "mockito-scala" % "1.0.8" % Test
