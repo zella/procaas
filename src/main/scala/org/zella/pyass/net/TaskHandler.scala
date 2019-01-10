@@ -1,34 +1,41 @@
 package org.zella.pyass.net
 
+import better.files.File
 import com.typesafe.scalalogging.LazyLogging
 import io.vertx.core.Handler
-import io.vertx.scala.core.http.HttpServerRequest
 import io.vertx.scala.ext.web.RoutingContext
 import monix.eval.Task
+import monix.execution.Scheduler
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.zella.pyass.executor.model.ExecutorWith
+import org.zella.pyass.executor.model.{Params, Executor}
 import org.zella.pyass.net.model.WriteResponse
+import play.api.libs.json.Json
 
-import scala.concurrent.duration.Duration
-import scala.util.Try
-
-class TaskHandler(ex: ExecutorWith[_ <: WriteResponse]) extends Handler[RoutingContext] with LazyLogging {
+class TaskHandler[T <: Params, V <: WriteResponse](exec: Executor[T, V]) extends Handler[RoutingContext] with LazyLogging {
 
   override def handle(ctx: RoutingContext): Unit = {
-    Task.fromTry(ExecutionParams.fromRequest(ctx.request()))
-      .flatMap(ep => if (ep.isBlocking) ex.executeBlocking(ep.timeout) else ex.execute(ep.timeout))
-      //.executeOn()
+    //TODO test parse json failure
+    import TaskSchedulers._
+
+    //TODO make beautiful
+    Task.fromTry(exec.resolveInput(
+      ctx.fileUploads().map(f => File(f.uploadedFileName())).toSeq,
+      ctx.request().getFormAttribute("data").map(Json.parse)
+        .getOrElse(throw new RuntimeException("Can't get 'data' parameter"))
+    )).executeOn(io)
+      .flatMap(ep => exec.execute(ep.params, ep.timeout)
+        .executeOn(if (ep.isBlocking) io else cpu))
       .flatMap(v => Task(v.write(ctx.response())))
       .onErrorRecover {
         case e =>
-          logger.error("Failure", e) //TODO ?
+          logger.error("Failure", e)
           ctx.response().end(ExceptionUtils.getStackTrace(e))
-      }.runAsyncAndForget(monix.execution.Scheduler.Implicits.global)
+      }.runAsyncAndForget(cpu)
   }
 }
 
-case class ExecutionParams(timeout: Duration, isBlocking: Boolean)
-
-object ExecutionParams {
-  def fromRequest(req: HttpServerRequest): Try[ExecutionParams] = ???
+object TaskSchedulers {
+  //TODO thread limit
+  val io: Scheduler = Scheduler.io()
+  val cpu: Scheduler = monix.execution.Scheduler.Implicits.global
 }

@@ -1,4 +1,4 @@
-name := "pyass"
+name := "pyaas"
 
 version := "0.1-SNAPSHOT"
 
@@ -30,6 +30,10 @@ libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.8.1"
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
+// https://mvnrepository.com/artifact/com.github.pathikrit/better-files
+libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.7.0"
+// https://mvnrepository.com/artifact/com.typesafe.play/play-json
+libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.13"
 // https://mvnrepository.com/artifact/org.apache.commons/commons-text
 libraryDependencies += "org.apache.commons" % "commons-text" % "1.6" //https://stackoverflow.com/a/52695352/1996639
 // https://mvnrepository.com/artifact/org.scalatest/scalatest
