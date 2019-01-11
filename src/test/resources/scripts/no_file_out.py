@@ -1,0 +1,1 @@
+print('Script without output dir')

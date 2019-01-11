@@ -3,7 +3,7 @@ package org.zella.testing
 import better.files.File
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, Outcome, fixture}
-import org.zella.pyass.config.PyaasConfig
+import org.zella.pyaas.config.PyaasConfig
 
 abstract class PyaasSpec extends fixture.WordSpec with Matchers with MockitoSugar {
 
