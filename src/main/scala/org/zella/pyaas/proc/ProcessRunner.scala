@@ -4,14 +4,15 @@ import java.io.{BufferedReader, IOException, InputStreamReader, PrintStream}
 import java.util.concurrent.TimeUnit
 
 import better.files.File
+import monix.eval.Task
 
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
 class ProcessRunner {
 
-  def run(cmd: Seq[String], workDir: File, timeout: Duration): Try[Done.type] = {
-    Try {
+  def run(cmd: Seq[String], workDir: File, timeout: Duration): Task[Done.type] = {
+    Task {
       val pb = new ProcessBuilder(cmd: _*)
         .directory(workDir.toJava)
       //        .redirectError(errors.toJava)
@@ -36,8 +37,8 @@ class ProcessRunner {
 
   //we don't use std out, because it can be filled with rubbish(ex some forget to remove "print")
   //TODO test with security check
-  def runPython(interpreter: String, script: String, workDir: File, timeout: Duration): Try[Done.type] = {
-    Try {
+  def runPython(interpreter: String, script: String, workDir: File, timeout: Duration): Task[Done.type] = {
+    Task {
       val pb = new ProcessBuilder(interpreter)
         .directory(workDir.toJava)
       val process = pb.start()

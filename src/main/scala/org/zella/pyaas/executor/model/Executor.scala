@@ -6,7 +6,6 @@ import org.zella.pyaas.net.model.Result
 import play.api.libs.json.JsValue
 
 import scala.concurrent.duration.Duration
-import scala.util.Try
 
 //TODO better class names
 trait Params
@@ -17,7 +16,7 @@ trait Executor[T <: Params, V <: Result] {
 
   def execute(params: T, timeout: Duration): Task[(V, Option[WorkDir])]
 
-  def prepareInput(files: Seq[FileUpload], params: JsValue): Try[ExecutionParams[T]]
+  def prepareInput(files: Seq[FileUpload], params: JsValue): Task[ExecutionParams[T]]
 }
 
 case class ExecutionParams[T <: Params](params: T, timeout: Duration, isBlocking: Boolean)

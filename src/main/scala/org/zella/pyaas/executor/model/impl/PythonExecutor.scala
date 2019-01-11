@@ -30,21 +30,21 @@ class PythonExecutor(conf: PyaasConfig, pr: ProcessRunner = new ProcessRunner)
       StringSubstitutor.replace(param.scriptBody, normalizator, "{{", "}}")
     }.flatMap { script =>
       //https://stackoverflow.com/questions/27658478/java-run-shell-command-with-eof
-      Task.fromTry(pr.runPython(conf.pythonInterpreter, script, param.outDir.parent, timeout)
+      pr.runPython(conf.pythonInterpreter, script, param.outDir.parent, timeout)
         .flatMap(_ =>
           new PythonResultGrabber(
             param.outDir,
             param.howToGrab,
             conf.resultTextualLimitBytes,
             conf.resultBinaryLimitBytes).grab)
-        .map((_, Option(param.workDir))))
+        .map((_, Option(param.workDir)))
     }
   }
 
 
   //form data with files and single json field
-  override def prepareInput(files: Seq[FileUpload], params: JsValue): Try[ExecutionParams[PyScriptParam]] = {
-    Try {
+  override def prepareInput(files: Seq[FileUpload], params: JsValue): Task[ExecutionParams[PyScriptParam]] = {
+    Task {
       val input = params.as[PyParamInput]
       val workDir = conf.workdir / "python" / UUID.randomUUID().toString
       val outDir = workDir / "output"

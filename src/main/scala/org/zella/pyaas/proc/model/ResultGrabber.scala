@@ -1,8 +1,7 @@
 package org.zella.pyaas.proc.model
 
+import monix.eval.Task
 import org.zella.pyaas.net.model.Result
-
-import scala.util.Try
 
 /**
   * Grab result from success process run
@@ -10,5 +9,5 @@ import scala.util.Try
   * @tparam T result type
   */
 trait ResultGrabber[T <: Result] {
-  def grab: Try[T]
+  def grab: Task[T]
 }

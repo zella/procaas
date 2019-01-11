@@ -16,11 +16,11 @@ class TaskHandler[T <: Params, V <: Result](exec: Executor[T, V]) extends Handle
   override def handle(ctx: RoutingContext): Unit = {
     //TODO test parse json failure
     import TaskSchedulers._
-    Task.defer(Task.fromTry(exec.prepareInput(
+    exec.prepareInput(
       ctx.fileUploads().map(f => FileUpload(f.fileName(), File(f.uploadedFileName()))).toSeq,
       ctx.request().getFormAttribute("data").map(Json.parse)
         .getOrElse(throw new RuntimeException("Can't get 'data' parameter"))
-    ))).executeOn(io)
+    ).executeOn(io)
       .flatMap(ep => exec.execute(ep.params, ep.timeout)
         .executeOn(if (ep.isBlocking) io else cpu))
       .flatMap { case (result, workDirOpt) => result.write(ctx.response())

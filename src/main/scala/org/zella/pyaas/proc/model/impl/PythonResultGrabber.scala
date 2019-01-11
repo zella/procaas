@@ -2,6 +2,7 @@ package org.zella.pyaas.proc.model.impl
 
 import better.files.File
 import com.fasterxml.jackson.core.JsonParseException
+import monix.eval.Task
 import org.zella.pyaas.net.model.impl.FilePyResult
 import org.zella.pyaas.proc.GrabResultException
 import org.zella.pyaas.proc.model.ResultGrabber
@@ -13,8 +14,8 @@ class PythonResultGrabber(out: File, howToGrab: HowToGrab,
                           textualLimitBytes: Long,
                           binaryLimitBytes: Long) extends ResultGrabber[FilePyResult] {
 
-  override def grab: Try[FilePyResult] = {
-    Try {
+  override def grab: Task[FilePyResult] = {
+    Task {
       val files = out.children
       howToGrab match {
         case _ if files.isEmpty =>
@@ -32,19 +33,7 @@ class PythonResultGrabber(out: File, howToGrab: HowToGrab,
         case AsSingleFile if files.size == 1 => FilePyResult(out.list.toSeq.head)
         case AsSingleFile if files.size > 1 =>
           throw new GrabResultException(s"No zipping requested, but here ${files.size} files")
-        //        case AsJson if files.size > 1 =>
-        //          throw new GrabResultException(s"Json requested, but here ${files.size} files")
-        //        case AsJson if files.size == 1 =>
-        //          JsonPyResult(Json.parse(out.contentAsString))
-        //        case AsText if files.size > 1 =>
-        //          throw new GrabResultException(s"Text requested, but here ${files.size} files")
-        //        case AsText if files.size == 1 =>
-        //          TextPyResult(out.contentAsString)
-
       }
-    }.recoverWith {
-      case e: JsonParseException => Failure(new GrabResultException("Invalid result json", e))
-      case e => Failure(e)
     }
 
   }
