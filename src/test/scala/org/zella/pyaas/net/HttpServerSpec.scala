@@ -47,11 +47,12 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
 
     "return file for single file output script" in { s =>
 
-      val svc = url(s"http://localhost:${HttpServerSpec.PORT}/execPython")
+      val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
         .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/single_file_out.py"),
-        resultAsZip = false,
+          stdoutMode = false,
+          resultAsZip = false,
           3000,
-        isBlocking = false)).toString()))
+          isBlocking = false)).toString()))
         .addBodyPart(new FilePart("someName1", File(Resource.getUrl("input/1.txt")).toJava))
         .addBodyPart(new FilePart("someName2", File(Resource.getUrl("input/2.txt")).toJava))
         .setMethod("POST")

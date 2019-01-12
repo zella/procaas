@@ -1,16 +1,20 @@
 package org.zella.pyaas.proc.model.impl
 
+import java.io.BufferedReader
+import java.util.stream.Collectors
+
 import better.files.File
 import com.fasterxml.jackson.core.JsonParseException
 import monix.eval.Task
-import org.zella.pyaas.net.model.impl.FilePyResult
+import monix.reactive.Observable
+import org.zella.pyaas.net.model.impl.{FilePyResult, PyResult, StdoutChunkedPyResult, StdoutPyResult}
 import org.zella.pyaas.proc.GrabResultException
 import org.zella.pyaas.proc.model.ResultGrabber
 
 import scala.util.{Failure, Try}
 
 //TODO unit test
-class PythonResultGrabber(out: File, howToGrab: HowToGrab,
+class FilePyResultGrabber(out: File, howToGrab: AsFilesGrab,
                           textualLimitBytes: Long,
                           binaryLimitBytes: Long) extends ResultGrabber[FilePyResult] {
 
@@ -20,8 +24,6 @@ class PythonResultGrabber(out: File, howToGrab: HowToGrab,
       howToGrab match {
         case _ if files.isEmpty =>
           throw new GrabResultException(s"No result files")
-        //        case AsText || AsJson if out.list.map(_.toJava.length()).sum > textualLimitBytes =>
-        //          throw new GrabResultException(s"Text result limit higher that $textualLimitBytes bytes")
         case AsZip(_) | AsSingleFile if out.list.map(_.toJava.length()).sum > binaryLimitBytes =>
           throw new GrabResultException(s"Binary result limit higher that $binaryLimitBytes bytes")
         case AsZip(compressionLevel) =>
@@ -39,9 +41,27 @@ class PythonResultGrabber(out: File, howToGrab: HowToGrab,
   }
 }
 
-sealed trait HowToGrab
+class StdoutChunkedPyResultGrabber(reader: BufferedReader) extends ResultGrabber[StdoutChunkedPyResult] {
+
+  override def grab: Task[StdoutChunkedPyResult] = Task(StdoutChunkedPyResult(reader))
+
+}
+
+class StdoutPyResultGrabber(reader: BufferedReader) extends ResultGrabber[StdoutPyResult] {
+
+  override def grab: Task[StdoutPyResult] = Task(StdoutPyResult(reader.lines().collect(Collectors.joining())))
+
+}
+
+trait HowToGrab
+
+sealed trait AsFilesGrab extends HowToGrab
+
+sealed trait AsStdoutGrab extends HowToGrab
 
 //no compression
-case class AsZip(compressionLevel: Int = 0) extends HowToGrab
+case class AsZip(compressionLevel: Int = 0) extends AsFilesGrab
 
-case object AsSingleFile extends HowToGrab
+case object AsSingleFile extends AsFilesGrab
+
+case class AsStdout(chunked: Boolean) extends AsStdoutGrab

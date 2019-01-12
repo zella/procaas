@@ -33,6 +33,7 @@ public class Test {
     }
 
     public static void main(String[] args) throws InterruptedException {
+        System.out.println("Bye");
         String cmd = "python3";
         String line1 = "print('i'*10)";
         String line2 = "print('i'*11)";
@@ -58,6 +59,7 @@ public class Test {
             p.waitFor();
 
             System.out.println(result);
+            System.out.println("Hello");
         } catch (IOException e) {
             e.printStackTrace();
         }

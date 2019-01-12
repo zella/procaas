@@ -16,7 +16,7 @@ class PyaasHttpServer(conf: PyaasConfig) extends LazyLogging {
       //Create a router to answer GET-requests to "/hello" with "world"
       val router = Router.router(vertx)
       router.route.handler(BodyHandler.create())
-      router.post("/execPython").handler(new TaskHandler(new PythonExecutor(conf)))
+      router.post("/exec_python").handler(new TaskHandler(new PythonExecutor(conf)))
       vertx
         .createHttpServer()
         .requestHandler(router.accept _)

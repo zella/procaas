@@ -16,6 +16,8 @@ javaOptions in Test += "-Dscala.concurrent.context.numThreads=1 -Dscala.concurre
 
 // https://mvnrepository.com/artifact/io.monix/monix-eval
 libraryDependencies += "io.monix" %% "monix-eval" % "3.0.0-RC2"
+// https://mvnrepository.com/artifact/io.monix/monix-reactive
+libraryDependencies += "io.monix" %% "monix-reactive" % "3.0.0-RC2"
 // https://mvnrepository.com/artifact/com.typesafe/config
 libraryDependencies += "com.typesafe" % "config" % "1.3.3"
 // https://mvnrepository.com/artifact/io.vertx/vertx-lang-scala-stack
