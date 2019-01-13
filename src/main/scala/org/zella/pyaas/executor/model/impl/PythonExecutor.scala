@@ -1,24 +1,20 @@
 package org.zella.pyaas.executor.model.impl
 
-import java.nio.file.Files
-import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-import java.util.stream.Collectors
 
 import better.files.File
 import monix.eval.Task
 import org.apache.commons.text.StringSubstitutor
 import org.zella.pyaas.config.PyaasConfig
 import org.zella.pyaas.executor.model.{ExecutionParams, Executor, FileUpload, Params}
-import org.zella.pyaas.net.model.impl.{FilePyResult, PyResult}
+import org.zella.pyaas.net.model.impl.PyResult
 import org.zella.pyaas.proc.PyProcessRunner
 import org.zella.pyaas.proc.model.impl.{AsFilesGrab, _}
 import play.api.libs.json.{Format, JsValue, Json}
 
-import scala.concurrent.duration.Duration
-import scala.util.Try
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.Duration
 
 class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunner)
   extends Executor[PyScriptParam, PyResult] {
@@ -41,11 +37,11 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
                 conf.resultBinaryLimitBytes).grab)
 
         case AsStdout(true) =>
-          pr.runStdout(conf.pythonInterpreter, script, param.outDir.parent, timeout)
-            .flatMap(reader => new StdoutChunkedPyResultGrabber(reader).grab)
+          pr.runStdoutAsync(conf.pythonInterpreter, script, param.outDir.parent, timeout)
+            .flatMap(process => new StdoutChunkedPyResultGrabber(process).grab)
 
         case AsStdout(false) =>
-          pr.runStdout(conf.pythonInterpreter, script, param.outDir.parent, timeout)
+          pr.runStdoutSync(conf.pythonInterpreter, script, param.outDir.parent, timeout)
             .flatMap(reader => new StdoutPyResultGrabber(reader).grab)
 
       }).map((_, Some(param.workDir)))
@@ -62,11 +58,25 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
       outDir.createDirectoryIfNotExists(createParents = true)
       val inDir = workDir / "input"
       if (files.nonEmpty) {
+        if (input.zipInputMode && files.size > 1 && !files.head.originalName.takeRight(3).equalsIgnoreCase("zip"))
+          throw new RuntimeException("Invalid zipInputMode, should be one zip file")
+
         inDir.createDirectoryIfNotExists(createParents = true)
-        files.foreach(fu => fu.file.moveTo(inDir / fu.originalName))
+        val moved = files.map(fu => fu.file.moveTo(inDir / fu.originalName))
+
+        if (input.zipInputMode) {
+          moved.head.unzipTo(inDir)
+          moved.head.delete()
+        }
       }
 
-      val howToGrab = if (input.resultAsZip) AsZip() else AsSingleFile
+      val howToGrab = input.outPutMode match {
+        case "stdout" => AsStdout(chunked = false)
+        case "chunked_stdout" => AsStdout(chunked = true)
+        case "zip" => AsZip()
+        case "file" => AsSingleFile
+      }
+
 
       ExecutionParams(
         PyScriptParam(input.scriptBody, howToGrab, inDir, outDir, workDir),
@@ -78,9 +88,13 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
 
 case class PyScriptParam(scriptBody: String, howToGrab: HowToGrab, inDir: File, outDir: File, workDir: File) extends Params
 
-case class PyParamInput(scriptBody: String, stdoutMode: Boolean, resultAsZip: Boolean, timeoutMillis: Long, isBlocking: Boolean)
+case class PyParamInput(scriptBody: String,
+                        zipInputMode: Boolean = false,
+                        outPutMode: String = "stdout", //file, zip stdout_chunked //TODO enum
+                        timeoutMillis: Long = 60 * 1000,
+                        isBlocking: Boolean = false)
 
 object PyParamInput {
-  implicit val jsonFormat: Format[PyParamInput] = Json.format[PyParamInput]
+  implicit val jsonFormat: Format[PyParamInput] = Json.using[Json.WithDefaultValues].format[PyParamInput]
 }
 

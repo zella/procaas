@@ -38,7 +38,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
       test(server)
     }
     finally {
-      workDir.delete()
+    //  workDir.delete()
       Task.fromFuture(server.closeFuture()).runSyncUnsafe()
     }
   }
@@ -49,10 +49,10 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
 
       val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
         .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/single_file_out.py"),
-          stdoutMode = false,
-          resultAsZip = false,
-          3000,
-          isBlocking = false)).toString()))
+          zipInputMode = false,
+          outPutMode = "file",
+          5000
+        )).toString()))
         .addBodyPart(new FilePart("someName1", File(Resource.getUrl("input/1.txt")).toJava))
         .addBodyPart(new FilePart("someName2", File(Resource.getUrl("input/2.txt")).toJava))
         .setMethod("POST")
@@ -65,6 +65,53 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
 
     }
 
+
+    "return file for multiple file output script with processing thru docker" ignore  { s =>
+
+      val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
+        .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/with_docker.py"),
+          zipInputMode = false,
+          outPutMode = "zip",
+          30000
+        )).toString()))
+        .addBodyPart(new FilePart("someName1", File(Resource.getUrl("input/image1.png")).toJava))
+        .addBodyPart(new FilePart("someName2", File(Resource.getUrl("input/image2.png")).toJava))
+        .setMethod("POST")
+
+      val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
+
+      resp.getStatusCode shouldBe 200
+      resp.getContentType shouldBe "text/plain"
+      resp.getResponseBody shouldBe "12"
+
+    }
+
+    "return stdout for stdout script" in { s =>
+
+      val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
+        .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/simple_stdout.py"))).toString()))
+        .setMethod("POST")
+
+      val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
+
+      resp.getStatusCode shouldBe 200
+      resp.getResponseBody shouldBe "2019"
+    }
+
+    "return chunked stdout for stdout script in chunked mode" in { s =>
+
+      val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
+        .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/chunked_stdout.py"),
+          outPutMode = "chunked_stdout")).toString()))
+        .setMethod("POST")
+
+      val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
+
+      resp.getStatusCode shouldBe 200
+      resp.getResponseBody shouldBe "0123"
+    }
+
+
     "return valid single file for single file based scripts" in { s => }
     "fail for multiple file for zip based script" in { s => }
     "fail for multiple file for text based script" in { s => }
@@ -76,3 +123,4 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
 object HttpServerSpec {
   val PORT = 9477
 }
+

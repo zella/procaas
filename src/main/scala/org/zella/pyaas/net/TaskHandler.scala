@@ -23,8 +23,8 @@ class TaskHandler[T <: Params, V <: Result](exec: Executor[T, V]) extends Handle
     ).executeOn(io)
       .flatMap(ep => exec.execute(ep.params, ep.timeout)
         .executeOn(if (ep.isBlocking) io else cpu))
-      .flatMap { case (result, workDirOpt) => result.write(ctx.response())
-        .doOnFinish(_ => Task(workDirOpt.foreach(_.parent.delete())))
+      .flatMap { case (result, workDirOpt) => result.write(ctx.response()).executeOn(io)
+        .doOnFinish(_ => Task(workDirOpt.foreach(_.parent.delete()))).executeOn(io)
       }
       .onErrorRecover {
         case e =>

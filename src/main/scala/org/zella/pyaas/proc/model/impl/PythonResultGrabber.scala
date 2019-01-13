@@ -41,15 +41,18 @@ class FilePyResultGrabber(out: File, howToGrab: AsFilesGrab,
   }
 }
 
-class StdoutChunkedPyResultGrabber(reader: BufferedReader) extends ResultGrabber[StdoutChunkedPyResult] {
+class StdoutChunkedPyResultGrabber(process: Process) extends ResultGrabber[StdoutChunkedPyResult] {
 
-  override def grab: Task[StdoutChunkedPyResult] = Task(StdoutChunkedPyResult(reader))
+  override def grab: Task[StdoutChunkedPyResult] = Task(StdoutChunkedPyResult(process))
 
 }
 
-class StdoutPyResultGrabber(reader: BufferedReader) extends ResultGrabber[StdoutPyResult] {
+class StdoutPyResultGrabber(out:String) extends ResultGrabber[StdoutPyResult] {
 
-  override def grab: Task[StdoutPyResult] = Task(StdoutPyResult(reader.lines().collect(Collectors.joining())))
+  override def grab: Task[StdoutPyResult] = Task {
+    StdoutPyResult(out)
+  }
+
 
 }
 

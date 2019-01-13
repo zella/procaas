@@ -36,6 +36,9 @@ libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.7.0"
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.13"
 // https://mvnrepository.com/artifact/org.apache.commons/commons-text
 libraryDependencies += "org.apache.commons" % "commons-text" % "1.6"
+// https://mvnrepository.com/artifact/org.zeroturnaround/zt-exec
+libraryDependencies += "org.zeroturnaround" % "zt-exec" % "1.10"
+
 // https://mvnrepository.com/artifact/org.scalatest/scalatest
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % Test
 // https://mvnrepository.com/artifact/org.mockito/mockito-scala
