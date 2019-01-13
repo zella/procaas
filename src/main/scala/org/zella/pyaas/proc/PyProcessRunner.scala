@@ -24,7 +24,7 @@ class PyProcessRunner extends LazyLogging {
       .directory(workDir.toJava)
     val process = pb.start()
     val procOut = new PrintStream(process.getOutputStream)
-    script.lines.foreach(procOut.println)
+    script.lines.forEach(s => procOut.println(s))
     procOut.close()
     process
   }
