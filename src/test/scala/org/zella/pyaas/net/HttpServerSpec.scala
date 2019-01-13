@@ -60,7 +60,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
 
       resp.getStatusCode shouldBe 200
       resp.getContentType shouldBe "text/plain"
-      resp.getResponseBody shouldBe "12"
+      resp.getResponseBody shouldBe "contentcontent"
 
     }
 
