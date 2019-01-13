@@ -4,9 +4,12 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import better.files.File
+import com.typesafe.scalalogging.LazyLogging
 import monix.eval.Task
+import monix.execution.Scheduler
 import org.apache.commons.text.StringSubstitutor
 import org.zella.pyaas.config.PyaasConfig
+import org.zella.pyaas.executor.TaskSchedulers
 import org.zella.pyaas.executor.model.{ExecutionParams, Executor, FileUpload, Params}
 import org.zella.pyaas.net.model.impl.PyResult
 import org.zella.pyaas.proc.PyProcessRunner
@@ -17,27 +20,32 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 
 class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunner)
-  extends Executor[PyScriptParam, PyResult] {
+  extends Executor[PyScriptParam, PyResult] with LazyLogging {
 
   override def execute(param: PyScriptParam, timeout: Duration): Task[(PyResult, Option[WorkDir])] = {
     Task {
+      logger.debug("Script normalisation...")
       val normalizator = Map(
         "input" -> param.inDir.pathAsString,
         "output" -> param.outDir.pathAsString).asJava
       StringSubstitutor.replace(param.scriptBody, normalizator, "{{", "}}")
     }.flatMap { script =>
+      implicit val processScheduler = param.scheduler
       (param.howToGrab match {
         case how: AsFilesGrab =>
-          pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout).completedL
+          pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)
+            .completedL
             .flatMap(_ =>
               new FilePyResultGrabber(
                 param.outDir,
                 how,
                 conf.resultTextualLimitBytes,
-                conf.resultBinaryLimitBytes).grab) //TODO grabbing should use io. So we should use basic io scheduler and apply cpu/io only on process runner!
+                conf.resultBinaryLimitBytes).grab)
 
         case AsStdout(true) =>
-          new StdoutChunkedPyResultGrabber(pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)).grab
+          new StdoutChunkedPyResultGrabber(
+            pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)
+          ).grab
 
         case AsStdout(false) =>
           pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)
@@ -51,6 +59,7 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
   //form data with files and single json field
   override def prepareInput(files: Seq[FileUpload], params: JsValue): Task[ExecutionParams[PyScriptParam]] = {
     Task {
+      logger.debug("Preparing input...")
       val input = params.as[PyParamInput]
       val workDir = conf.workdir / "python" / UUID.randomUUID().toString
       val outDir = workDir / "output"
@@ -78,14 +87,19 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
 
 
       ExecutionParams(
-        PyScriptParam(input.scriptBody, howToGrab, inDir, outDir, workDir),
+        PyScriptParam(input.scriptBody,
+          howToGrab,
+          inDir,
+          outDir,
+          workDir,
+          if (input.isBlocking) TaskSchedulers.io else TaskSchedulers.cpu),
         Duration(input.timeoutMillis, TimeUnit.MILLISECONDS),
         input.isBlocking)
     }
   }
 }
 
-case class PyScriptParam(scriptBody: String, howToGrab: HowToGrab, inDir: File, outDir: File, workDir: File) extends Params
+case class PyScriptParam(scriptBody: String, howToGrab: HowToGrab, inDir: File, outDir: File, workDir: File, scheduler: Scheduler) extends Params
 
 case class PyParamInput(scriptBody: String,
                         zipInputMode: Boolean = false,

@@ -7,6 +7,7 @@ import java.util.stream.Collectors
 import better.files.File
 import com.typesafe.scalalogging.LazyLogging
 import monix.eval.Task
+import monix.execution.Scheduler
 import monix.reactive.Observable
 
 import scala.concurrent.duration.Duration
@@ -50,10 +51,10 @@ class PyProcessRunner extends LazyLogging {
     exitCode
   }
 
-  def run(interpreter: String, script: String, workDir: File, timeout: Duration): Observable[String] = {
+  def run(interpreter: String, script: String, workDir: File, timeout: Duration)(implicit sc: Scheduler): Observable[String] = {
     val startProc: Task[Process] = start(interpreter, script, workDir).memoize
     val readByLine: Observable[String] = Observable.fromTask(startProc).flatMap(process => chunkedOutput(process))
-    val waitResult: Task[Int] = startProc.flatMap(process => result(process, timeout))
+    val waitResult: Task[Int] = startProc.flatMap(process => result(process, timeout).executeOn(sc))
     val done: Observable[String] = Observable(readByLine, Observable.fromTask(waitResult).flatMap(_ => Observable.empty[String])).concat
     done
   }
