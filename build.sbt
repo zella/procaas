@@ -1,6 +1,6 @@
 name := "pyaas"
 
-version := "0.1-SNAPSHOT"
+version := IO.read(new File("version.txt"))
 
 scalaVersion := "2.12.8"
 
@@ -9,6 +9,8 @@ assemblyMergeStrategy in assembly := {
   case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
   case x => MergeStrategy.last
 }
+
+test in assembly := {}
 
 mainClass in assembly := Some("org.zella.pyaas.Runner")
 
