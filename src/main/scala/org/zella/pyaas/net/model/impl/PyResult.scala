@@ -27,8 +27,6 @@ case class StdoutPyResult(out: String) extends PyResult {
 
 case class StdoutChunkedPyResult(out: Observable[String]) extends PyResult with LazyLogging {
 
-  //TODO how chunked proccess should be executed?
-  //write should be executed on io
   override def write(response: HttpServerResponse): Task[Unit] = Task {
     response.setChunked(true)
   }.flatMap { _ =>

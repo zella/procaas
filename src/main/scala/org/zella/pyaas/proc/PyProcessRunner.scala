@@ -1,6 +1,7 @@
 package org.zella.pyaas.proc
 
 import java.io.{BufferedReader, InputStreamReader, PrintStream}
+import java.lang.ProcessBuilder.Redirect
 import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
@@ -9,6 +10,7 @@ import com.typesafe.scalalogging.LazyLogging
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
+import org.zella.pyaas.errors.ProcessException
 
 import scala.concurrent.duration.Duration
 
@@ -18,6 +20,7 @@ class PyProcessRunner extends LazyLogging {
   private def start(interpreter: String, script: String, workDir: File): Task[Process] = Task {
     logger.debug("Starting process...")
     val pb = new ProcessBuilder(interpreter)
+      .redirectError(Redirect.INHERIT)
       .directory(workDir.toJava)
     val process = pb.start()
     val procOut = new PrintStream(process.getOutputStream)
@@ -26,12 +29,10 @@ class PyProcessRunner extends LazyLogging {
     process
   }
 
-  //TODO check delay before InputStreamReader
-
   //emits process output in realtime
   private def chunkedOutput(process: Process): Observable[String] = {
-    val reader = new BufferedReader(new InputStreamReader(process.getInputStream))
-    Observable.fromLinesReader(Task(reader))
+    Observable.fromLinesReader(Task(new BufferedReader(new InputStreamReader(process.getInputStream))))
+      .doOnNext(l => Task(logger.debug(l)))
   }
 
   private def result(process: Process, timeout: Duration): Task[Int] = Task {

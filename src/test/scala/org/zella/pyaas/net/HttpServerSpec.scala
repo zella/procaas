@@ -28,9 +28,9 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
     //TODO test requestTimeout
 
     //TODO test it
-    when(conf.resultBinaryLimitBytes).thenReturn(1000)
+    when(conf.resultBinaryLimitBytes).thenReturn(100000)
     //TODO test it
-    when(conf.resultTextualLimitBytes).thenReturn(10000)
+    when(conf.resultTextualLimitBytes).thenReturn(1000000)
     when(conf.pythonInterpreter).thenReturn("python3")
 
     val server = new PyaasHttpServer(conf).startT().runSyncUnsafe()
@@ -38,7 +38,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
       test(server)
     }
     finally {
-    //  workDir.delete()
+      workDir.delete()
       Task.fromFuture(server.closeFuture()).runSyncUnsafe()
     }
   }
@@ -66,7 +66,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
     }
 
 
-    "return file for multiple file output script with processing thru docker" ignore  { s =>
+    "return file for multiple file output script with processing thru docker" in { s =>
 
       val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
         .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/with_docker.py"),
@@ -81,8 +81,8 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
       val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
 
       resp.getStatusCode shouldBe 200
-      resp.getContentType shouldBe "text/plain"
-      resp.getResponseBody shouldBe "12"
+      resp.getContentType shouldBe "application/zip"
+      resp.getHeader("content-length") shouldBe "67339"
 
     }
 

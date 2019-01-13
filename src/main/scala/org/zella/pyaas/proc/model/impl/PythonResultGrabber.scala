@@ -4,8 +4,8 @@ import better.files.File
 import com.typesafe.scalalogging.LazyLogging
 import monix.eval.Task
 import monix.reactive.Observable
+import org.zella.pyaas.errors.PyaasException
 import org.zella.pyaas.net.model.impl.{FilePyResult, StdoutChunkedPyResult, StdoutPyResult}
-import org.zella.pyaas.proc.GrabResultException
 import org.zella.pyaas.proc.model.ResultGrabber
 
 //TODO unit test
@@ -19,9 +19,9 @@ class FilePyResultGrabber(out: File, howToGrab: AsFilesGrab,
       val files = out.children
       howToGrab match {
         case _ if files.isEmpty =>
-          throw new GrabResultException(s"No result files")
+          throw new PyaasException(s"No result files")
         case AsZip(_) | AsSingleFile if out.list.map(_.toJava.length()).sum > binaryLimitBytes =>
-          throw new GrabResultException(s"Binary result limit higher that $binaryLimitBytes bytes")
+          throw new PyaasException(s"Binary result limit higher that $binaryLimitBytes bytes")
         case AsZip(compressionLevel) =>
           //TODO rule should be described on higher level
           val result = out.parent / "result.zip"
@@ -30,7 +30,7 @@ class FilePyResultGrabber(out: File, howToGrab: AsFilesGrab,
           FilePyResult(result)
         case AsSingleFile if files.size == 1 => FilePyResult(out.list.toSeq.head)
         case AsSingleFile if files.size > 1 =>
-          throw new GrabResultException(s"No zipping requested, but here ${files.size} files")
+          throw new PyaasException(s"No zipping requested, but here ${files.size} files")
       }
     }
 

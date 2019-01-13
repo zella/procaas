@@ -6,6 +6,7 @@ import io.vertx.core.Handler
 import io.vertx.scala.ext.web.RoutingContext
 import monix.eval.Task
 import org.apache.commons.lang3.exception.ExceptionUtils
+import org.zella.pyaas.errors.{InputException, PyaasException}
 import org.zella.pyaas.executor.TaskSchedulers
 import org.zella.pyaas.executor.model.{Executor, FileUpload, Params}
 import org.zella.pyaas.net.model.Result
@@ -18,18 +19,17 @@ class TaskHandler[T <: Params, V <: Result](exec: Executor[T, V]) extends Handle
     exec.prepareInput(
       ctx.fileUploads().map(f => FileUpload(f.fileName(), File(f.uploadedFileName()))).toSeq,
       ctx.request().getFormAttribute("data").map(Json.parse)
-        .getOrElse(throw new RuntimeException("Can't get 'data' parameter"))
+        .getOrElse(throw new InputException("Can't get 'data' parameter"))
     ).executeOn(TaskSchedulers.io)
       .flatMap(ep => exec.execute(ep.params, ep.timeout))
       .flatMap { case (result, workDirOpt) => result.write(ctx.response())
         .doOnFinish(_ => Task(workDirOpt.foreach(_.parent.delete())))
       }
       .onErrorRecover {
-        case e =>
+        case e: PyaasException =>
           logger.error("Failure", e)
           ctx.response()
-            //TODO fix me
-            .setStatusCode(500)
+            .setStatusCode(400)
             .end(ExceptionUtils.getStackTrace(e))
       }.runAsyncAndForget(TaskSchedulers.io)
   }

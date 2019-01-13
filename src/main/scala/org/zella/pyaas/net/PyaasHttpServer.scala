@@ -1,6 +1,7 @@
 package org.zella.pyaas.net
 
 import com.typesafe.scalalogging.LazyLogging
+import io.vertx.scala.core.http.HttpServerOptions
 import io.vertx.scala.core.{Vertx, http}
 import io.vertx.scala.ext.web.Router
 import io.vertx.scala.ext.web.handler.BodyHandler
@@ -18,7 +19,7 @@ class PyaasHttpServer(conf: PyaasConfig) extends LazyLogging {
       router.route.handler(BodyHandler.create())
       router.post("/exec_python").handler(new TaskHandler(new PythonExecutor(conf)))
       vertx
-        .createHttpServer()
+        .createHttpServer( HttpServerOptions().setIdleTimeout())
         .requestHandler(router.accept _)
         .listenFuture(conf.httpPort, "0.0.0.0")
     }

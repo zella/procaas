@@ -9,6 +9,7 @@ import monix.eval.Task
 import monix.execution.Scheduler
 import org.apache.commons.text.StringSubstitutor
 import org.zella.pyaas.config.PyaasConfig
+import org.zella.pyaas.errors.InputException
 import org.zella.pyaas.executor.TaskSchedulers
 import org.zella.pyaas.executor.model.{ExecutionParams, Executor, FileUpload, Params}
 import org.zella.pyaas.net.model.impl.PyResult
@@ -67,7 +68,7 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
       val inDir = workDir / "input"
       if (files.nonEmpty) {
         if (input.zipInputMode && files.size > 1 && !files.head.originalName.takeRight(3).equalsIgnoreCase("zip"))
-          throw new RuntimeException("Invalid zipInputMode, should be one zip file")
+          throw new InputException("Invalid zipInputMode, should be one zip file")
 
         inDir.createDirectoryIfNotExists(createParents = true)
         val moved = files.map(fu => fu.file.moveTo(inDir / fu.originalName))
