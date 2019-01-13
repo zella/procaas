@@ -28,24 +28,23 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
     }.flatMap { script =>
       (param.howToGrab match {
         case how: AsFilesGrab =>
-          pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)
+          pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout).completedL
             .flatMap(_ =>
               new FilePyResultGrabber(
                 param.outDir,
                 how,
                 conf.resultTextualLimitBytes,
-                conf.resultBinaryLimitBytes).grab)
+                conf.resultBinaryLimitBytes).grab) //TODO grabbing should use io. So we should use basic io scheduler and apply cpu/io only on process runner!
 
         case AsStdout(true) =>
-          pr.runStdoutAsync(conf.pythonInterpreter, script, param.outDir.parent, timeout)
-            .flatMap(process => new StdoutChunkedPyResultGrabber(process).grab)
+          new StdoutChunkedPyResultGrabber(pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)).grab
 
         case AsStdout(false) =>
-          pr.runStdoutSync(conf.pythonInterpreter, script, param.outDir.parent, timeout)
-            .flatMap(reader => new StdoutPyResultGrabber(reader).grab)
+          pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)
+            .toListL.map(lines => lines.mkString)
+            .flatMap(out => new StdoutPyResultGrabber(out).grab)
 
       }).map((_, Some(param.workDir)))
-
     }
   }
 

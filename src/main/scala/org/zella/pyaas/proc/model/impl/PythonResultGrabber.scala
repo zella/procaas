@@ -1,25 +1,21 @@
 package org.zella.pyaas.proc.model.impl
 
-import java.io.BufferedReader
-import java.util.stream.Collectors
-
 import better.files.File
-import com.fasterxml.jackson.core.JsonParseException
+import com.typesafe.scalalogging.LazyLogging
 import monix.eval.Task
 import monix.reactive.Observable
-import org.zella.pyaas.net.model.impl.{FilePyResult, PyResult, StdoutChunkedPyResult, StdoutPyResult}
+import org.zella.pyaas.net.model.impl.{FilePyResult, StdoutChunkedPyResult, StdoutPyResult}
 import org.zella.pyaas.proc.GrabResultException
 import org.zella.pyaas.proc.model.ResultGrabber
-
-import scala.util.{Failure, Try}
 
 //TODO unit test
 class FilePyResultGrabber(out: File, howToGrab: AsFilesGrab,
                           textualLimitBytes: Long,
-                          binaryLimitBytes: Long) extends ResultGrabber[FilePyResult] {
+                          binaryLimitBytes: Long) extends ResultGrabber[FilePyResult] with LazyLogging{
 
   override def grab: Task[FilePyResult] = {
     Task {
+      logger.debug("Grab file result...")
       val files = out.children
       howToGrab match {
         case _ if files.isEmpty =>
@@ -41,13 +37,13 @@ class FilePyResultGrabber(out: File, howToGrab: AsFilesGrab,
   }
 }
 
-class StdoutChunkedPyResultGrabber(process: Process) extends ResultGrabber[StdoutChunkedPyResult] {
+class StdoutChunkedPyResultGrabber(out: Observable[String]) extends ResultGrabber[StdoutChunkedPyResult] {
 
-  override def grab: Task[StdoutChunkedPyResult] = Task(StdoutChunkedPyResult(process))
+  override def grab: Task[StdoutChunkedPyResult] = Task(StdoutChunkedPyResult(out))
 
 }
 
-class StdoutPyResultGrabber(out:String) extends ResultGrabber[StdoutPyResult] {
+class StdoutPyResultGrabber(out: String) extends ResultGrabber[StdoutPyResult] {
 
   override def grab: Task[StdoutPyResult] = Task {
     StdoutPyResult(out)
