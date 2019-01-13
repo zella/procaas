@@ -3,7 +3,6 @@ package org.zella.pyaas.net
 import better.files.{File, Resource}
 import org.mockito.Mockito._
 import org.zella.pyaas.config.PyaasConfig
-import org.zella.testing.PyaasSpec
 import play.api.libs.json.Json
 import monix.execution.Scheduler.Implicits.global
 import dispatch._

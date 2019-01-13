@@ -19,7 +19,7 @@ class PyaasHttpServer(conf: PyaasConfig) extends LazyLogging {
       router.route.handler(BodyHandler.create())
       router.post("/exec_python").handler(new TaskHandler(new PythonExecutor(conf)))
       vertx
-        .createHttpServer( HttpServerOptions().setIdleTimeout())
+        .createHttpServer()
         .requestHandler(router.accept _)
         .listenFuture(conf.httpPort, "0.0.0.0")
     }
