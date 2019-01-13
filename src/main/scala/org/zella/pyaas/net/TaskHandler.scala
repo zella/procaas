@@ -12,6 +12,8 @@ import org.zella.pyaas.executor.model.{Executor, FileUpload, Params}
 import org.zella.pyaas.net.model.Result
 import play.api.libs.json.Json
 
+import scala.util.control.NonFatal
+
 class TaskHandler[T <: Params, V <: Result](exec: Executor[T, V]) extends Handler[RoutingContext] with LazyLogging {
 
   override def handle(ctx: RoutingContext): Unit = {
@@ -31,6 +33,8 @@ class TaskHandler[T <: Params, V <: Result](exec: Executor[T, V]) extends Handle
           ctx.response()
             .setStatusCode(400)
             .end(ExceptionUtils.getStackTrace(e))
+          //TODO it's ok?
+        case e => ctx.fail(e)
       }.runAsyncAndForget(TaskSchedulers.io)
   }
 }
