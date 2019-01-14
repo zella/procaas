@@ -53,9 +53,9 @@ jobs:
       - run:
           name: Build and push Docker image
           command: |
-            docker build -t zella/$IMAGE_NAME:$TAG -t zella/$IMAGE_NAME:latest -t zella/$IMAGE_NAME:$TAG_VER  -f ci/Dockerfile .
+            docker build -t zella/$IMAGE_NAME:$TAG -t zella/$IMAGE_NAME:latest -t zella/$IMAGE_NAME:$TAG_VER -f ci/Dockerfile .
             echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
-            docker push zella/$IMAGE_NAME:$TAG
+            docker push zella/$IMAGE_NAME:$TAG zella/$IMAGE_NAME:latest zella/$IMAGE_NAME:$TAG_VER
 
 
 workflows:
