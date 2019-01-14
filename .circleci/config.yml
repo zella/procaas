@@ -37,8 +37,7 @@ jobs:
       - run:
           name: Prepare environment
           command: |
-            #TODO fix me
-                     echo "export TAG=$(cat version.txt).${CIRCLE_BUILD_NUM}" >> $BASH_ENV
+            echo "export TAG=$(cat version.txt)b${CIRCLE_BUILD_NUM}" >> $BASH_ENV
       - restore_cache:
           keys:
             - sbt-scala-cache-{{ checksum "build.sbt" }}
