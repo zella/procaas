@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: circleci/openjdk:11
         environment:
-          JVM_OPTS: -Xmx2048m
+          JVM_OPTS: -Xmx3072m
       #TERM: dumb #TODO what is
     steps:
       - checkout
@@ -31,12 +31,13 @@ jobs:
         environment:
           IMAGE_NAME: pyaas
     environment:
-      JVM_OPTS: -Xmx2048m
+      JVM_OPTS: -Xmx3072m
     steps:
       - checkout
       - run:
           name: Prepare environment
           command: |
+            sudo apt-get install -y python3
             echo "export TAG=$(cat version.txt)b${CIRCLE_BUILD_NUM}" >> $BASH_ENV
       - restore_cache:
           keys:
