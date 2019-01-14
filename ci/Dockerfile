@@ -2,6 +2,10 @@ FROM openjdk:11
 
 ENV DOCKERVERSION=18.03.1-ce
 
+ENV HTTP_PORT=8666
+
+HEALTHCHECK CMD curl --fail http://localhost:${HTTP_PORT}/health_check || exit 1
+
 #RUN apt-get update \
 #  && apt-get install -y python3 \
 #  && wget https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz \

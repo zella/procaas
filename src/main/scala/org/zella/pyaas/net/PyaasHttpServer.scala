@@ -19,6 +19,7 @@ class PyaasHttpServer(conf: PyaasConfig) extends LazyLogging {
       router.route.handler(BodyHandler.create()
         .setDeleteUploadedFilesOnEnd(true))
       router.post("/exec_python").handler(new TaskHandler(new PythonExecutor(conf)))
+      router.get("/health_check").handler(ctx => ctx.response().end())
       vertx
         .createHttpServer()
         .requestHandler(router.accept _)
