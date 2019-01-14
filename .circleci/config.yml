@@ -64,6 +64,11 @@ workflows:
   main:
     jobs:
       - test
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /.*/
       - publish-nightly:
           requires:
             - test
