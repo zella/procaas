@@ -38,7 +38,8 @@ jobs:
           name: Prepare environment
           command: |
             sudo apt-get install -y python3
-            echo "export TAG=$(cat version.txt)b${CIRCLE_BUILD_NUM}" >> $BASH_ENV
+            echo "export TAG=$(cat version.txt).${CIRCLE_BUILD_NUM}" >> $BASH_ENV
+            echo "export TAG_VER=$(cat version.txt)" >> $BASH_ENV
       - restore_cache:
           keys:
             - sbt-scala-cache-{{ checksum "build.sbt" }}
@@ -52,7 +53,7 @@ jobs:
       - run:
           name: Build and push Docker image
           command: |
-            docker build -t zella/$IMAGE_NAME:$TAG  -f ci/Dockerfile .
+            docker build -t zella/$IMAGE_NAME:$TAG -t zella/$IMAGE_NAME:latest -t zella/$IMAGE_NAME:$TAG_VER  -f ci/Dockerfile .
             echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
             docker push zella/$IMAGE_NAME:$TAG
 
