@@ -55,7 +55,7 @@ jobs:
           command: |
             docker build -t zella/$IMAGE_NAME:$TAG -t zella/$IMAGE_NAME:latest -t zella/$IMAGE_NAME:$TAG_VER -f ci/Dockerfile .
             echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
-            docker push zella/$IMAGE_NAME:$TAG zella/$IMAGE_NAME:latest zella/$IMAGE_NAME:$TAG_VER
+            docker push zella/$IMAGE_NAME
 
 
 workflows:
