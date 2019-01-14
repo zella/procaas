@@ -93,9 +93,9 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
           inDir,
           outDir,
           workDir,
-          if (input.isBlocking) TaskSchedulers.io else TaskSchedulers.cpu),
+          if (input.computation == "io") TaskSchedulers.io else TaskSchedulers.cpu),
         Duration(input.timeoutMillis, TimeUnit.MILLISECONDS),
-        input.isBlocking)
+        input.computation == "io")
     }
   }
 }
@@ -106,7 +106,7 @@ case class PyParamInput(scriptBody: String,
                         zipInputMode: Boolean = false,
                         outPutMode: String = "stdout", //file, zip stdout_chunked //TODO enum
                         timeoutMillis: Long = 60 * 1000,
-                        isBlocking: Boolean = false)
+                        computation: String = "io") //cpu, io //TODO describe in config
 
 object PyParamInput {
   implicit val jsonFormat: Format[PyParamInput] = Json.using[Json.WithDefaultValues].format[PyParamInput]

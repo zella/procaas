@@ -12,9 +12,9 @@ object Runner extends LazyLogging {
 
     val config = new TypesafeConfig(ConfigFactory.load())
 
-    val port = new PyaasHttpServer(config).startT()
+    val server = new PyaasHttpServer(config).startT()
       .runSyncUnsafe(timeout = config.httpStartTimeout)
 
-    logger.info(s"Server started at port $port")
+    logger.info(s"Server started at port ${config.httpPort}")
   }
 }

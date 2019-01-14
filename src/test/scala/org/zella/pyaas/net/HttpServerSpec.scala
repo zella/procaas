@@ -65,7 +65,10 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
     }
 
 
-    "return file for multiple file output script with processing thru docker" in { s =>
+    /**
+      * Should runs on dind-like images
+      */
+    "return file for multiple file output script with processing thru docker" ignore { s =>
 
       val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
         .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/with_docker.py"),
@@ -111,9 +114,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
     }
 
 
-    "return valid single file for single file based scripts" in { s => }
-    "fail for multiple file for zip based script" in { s => }
-    "fail for multiple file for text based script" in { s => }
+    "TODO" in { s => }
 
 
   }
