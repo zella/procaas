@@ -3,8 +3,8 @@ jobs:
   test:
     docker:
       - image: circleci/openjdk:11
-    environment:
-      JVM_OPTS: -Xmx2048m
+        environment:
+          JVM_OPTS: -Xmx2048m
       #TERM: dumb #TODO what is
     steps:
       - checkout
@@ -28,8 +28,8 @@ jobs:
   publish-nightly:
     docker:
       - image: circleci/openjdk:11
-      environment:
-        IMAGE_NAME: pyaas
+        environment:
+          IMAGE_NAME: pyaas
     environment:
       JVM_OPTS: -Xmx2048m
     steps:
