@@ -12,7 +12,7 @@ RUN apt-get update \
   && rm docker-${DOCKERVERSION}.tgz
 
 
-COPY pyaas.jar /app/
+COPY ci/pyaas.jar /app/
 
 EXPOSE ${HTTP_PORT}
 
