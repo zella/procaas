@@ -1,13 +1,13 @@
 version: 2
 jobs:
-  build:
+  environment:
+    IMAGE_NAME: pyaas
+  test:
     docker:
       - image: circleci/openjdk:11
-
     environment:
       JVM_OPTS: -Xmx2048m
       #TERM: dumb #TODO what is
-
     steps:
       - checkout
       - run:
@@ -18,11 +18,57 @@ jobs:
           keys:
             - sbt-scala-cache-{{ checksum "build.sbt" }}
       - run:
-          name: Test and build fat jar
+          name: Test
           command: |
             sbt test
+            #test assembly command
             sbt assembly
       - save_cache:
           paths: ["/home/circleci/.m2", "/home/circleci/.ivy2/cache", "/home/circleci/.coursier/cache", "/home/circleci/.sbt/launchers", "/home/circleci/.cache/coursier"]
           key: sbt-scala-cache-{{ checksum "build.sbt" }}
 
+  release:
+    docker:
+      - image: circleci/openjdk:11
+    environment:
+      JVM_OPTS: -Xmx2048m
+    steps:
+      - checkout
+      - run:
+          name: Prepare environment
+          command: |
+            #TODO fix me
+                     echo "export TAG=$(cat version.txt).${CIRCLE_BUILD_NUM}" >> $BASH_ENV
+      - restore_cache:
+          keys:
+            - sbt-scala-cache-{{ checksum "build.sbt" }}
+      - run:
+          name: Prepare build files
+          command: |
+            sbt assembly
+            python3 ci/prepare_docker_build.py
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build and push Docker image
+          command: |
+            docker build -t zella/$IMAGE_NAME:$TAG .
+            echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+            docker push zella/$IMAGE_NAME:$TAG
+
+workflows:
+  version: 2
+  #  untagged-build:
+  #    jobs:
+  #      - test
+  main:
+    jobs:
+      - test
+      - publish:
+          requires:
+            - test
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
