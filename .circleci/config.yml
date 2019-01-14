@@ -63,7 +63,7 @@ workflows:
   #      - test
   main:
     jobs:
-      - test
+      - test:
           filters:
             branches:
               only: /.*/
