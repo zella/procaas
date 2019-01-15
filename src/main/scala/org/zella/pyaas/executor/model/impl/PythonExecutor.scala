@@ -24,45 +24,43 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
   extends Executor[PyScriptParam, PyResult] with LazyLogging {
 
   override def execute(param: PyScriptParam, timeout: Duration): Task[(PyResult, Option[WorkDir])] = {
-    Task {
-      logger.debug("Script normalisation...")
-      val normalizator = Map(
-        "input" -> param.inDir.pathAsString,
-        "output" -> param.outDir.pathAsString).asJava
-      StringSubstitutor.replace(param.scriptBody, normalizator, "{{", "}}")
-    }.flatMap { script =>
+    def runInternal() = {
       implicit val processScheduler = param.scheduler
-      (param.howToGrab match {
-        case how: AsFilesGrab =>
+      param.executionMode match {
+        case RunPyBody(script) =>
           pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)
-            .completedL
-            .flatMap(_ =>
-              new FilePyResultGrabber(
-                param.outDir,
-                how,
-                conf.resultTextualLimitBytes,
-                conf.resultBinaryLimitBytes).grab)
-
-        case AsStdout(true) =>
-          new StdoutChunkedPyResultGrabber(
-            pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)
-          ).grab
-
-        case AsStdout(false) =>
-          pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)
-            .toListL.map(lines => lines.mkString)
-            .flatMap(out => new StdoutPyResultGrabber(out).grab)
-
-      }).map((_, Some(param.workDir)))
+        case RunPyFile(file, args) =>
+          pr.run(conf.pythonInterpreter, file, args, param.outDir.parent, timeout)
+      }
     }
+
+    (param.howToGrab match {
+      case how: AsFilesGrab =>
+        runInternal()
+          .completedL
+          .flatMap(_ =>
+            new FilePyResultGrabber(
+              param.outDir,
+              how,
+              conf.resultTextualLimitBytes,
+              conf.resultBinaryLimitBytes).grab)
+
+      case AsStdout(true) =>
+        new StdoutChunkedPyResultGrabber(runInternal()).grab
+      case AsStdout(false) =>
+        runInternal()
+          .toListL.map(lines => lines.mkString)
+          .flatMap(out => new StdoutPyResultGrabber(out).grab)
+
+    }).map((_, Option(param.workDir)))
   }
 
   //form data with files and single json field
   override def prepareInput(files: Seq[FileUpload], params: JsValue): Task[ExecutionParams[PyScriptParam]] = {
     Task {
-      logger.debug("Preparing input...")
+      val id = UUID.randomUUID().toString
       val input = params.as[PyParamInput]
-      val workDir = conf.workdir / "python" / UUID.randomUUID().toString
+      val workDir = conf.workDir / "python" / id
       val outDir = workDir / "output"
       outDir.createDirectoryIfNotExists(createParents = true)
       val inDir = workDir / "input"
@@ -86,9 +84,20 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
         case "file" => AsSingleFile
       }
 
+      logger.debug("Script normalisation...")
+      val normalizator = Map(
+        "input" -> inDir.pathAsString,
+        "output" -> outDir.pathAsString).asJava
+      val scriptBody = StringSubstitutor.replace(input.scriptBody, normalizator, "{{", "}}")
+
+      val executionMode = if (input.args.isDefined) {
+        val scriptFile = (conf.scriptDir / s"$id.py").overwrite(scriptBody)
+        val parsedArgs = input.args.map(_.split(",").toSeq).getOrElse(Seq.empty)
+        RunPyFile(scriptFile, parsedArgs)
+      } else RunPyBody(scriptBody)
 
       ExecutionParams(
-        PyScriptParam(input.scriptBody,
+        PyScriptParam(executionMode,
           howToGrab,
           inDir,
           outDir,
@@ -100,9 +109,16 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
   }
 }
 
-case class PyScriptParam(scriptBody: String, howToGrab: HowToGrab, inDir: File, outDir: File, workDir: File, scheduler: Scheduler) extends Params
+case class PyScriptParam(executionMode: ExecutionMode, howToGrab: HowToGrab, inDir: File, outDir: File, workDir: File, scheduler: Scheduler) extends Params
+
+sealed trait ExecutionMode
+
+case class RunPyFile(file: File, args: Seq[String]) extends ExecutionMode
+
+case class RunPyBody(script: String) extends ExecutionMode
 
 case class PyParamInput(scriptBody: String,
+                        args: Option[String] = None,
                         zipInputMode: Boolean = false,
                         outPutMode: String = "stdout", //file, zip stdout_chunked //TODO enum
                         timeoutMillis: Long = 60 * 1000,

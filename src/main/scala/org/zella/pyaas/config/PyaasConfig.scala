@@ -12,7 +12,9 @@ trait PyaasConfig {
 
   def pythonInterpreter: String
 
-  def workdir: File
+  def workDir: File
+
+  def scriptDir: File
 
   /**
     *

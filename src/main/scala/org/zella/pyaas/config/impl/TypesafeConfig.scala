@@ -14,7 +14,9 @@ class TypesafeConfig(conf: Config) extends PyaasConfig {
 
   override val pythonInterpreter: String = conf.getString("python.interpreter")
 
-  override val workdir: File = File(conf.getString("workdir"))
+  override val workDir: File = File(conf.getString("workdir"))
+
+  override val scriptDir: File = File(conf.getString("scriptdir"))
 
   override val resultTextualLimitBytes: Long = conf.getLong("result.textualLimitBytes")
 

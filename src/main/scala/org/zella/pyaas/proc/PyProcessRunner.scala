@@ -17,14 +17,25 @@ import scala.concurrent.duration.Duration
 class PyProcessRunner extends LazyLogging {
 
   //return started process
-  private def start(interpreter: String, script: String, workDir: File): Task[Process] = Task {
+  private def start(interpreter: String, scriptContent: String, workDir: File): Task[Process] = Task {
     logger.debug("Starting process...")
     val pb = new ProcessBuilder(interpreter)
       .redirectError(Redirect.INHERIT)
       .directory(workDir.toJava)
     val process = pb.start()
     val procOut = new PrintStream(process.getOutputStream)
-    script.lines.forEach(s => procOut.println(s))
+    scriptContent.lines.forEach(s => procOut.println(s))
+    procOut.close()
+    process
+  }
+
+  private def start(interpreter: String, script: File, args: Seq[String], workDir: File): Task[Process] = Task {
+    logger.debug("Starting process...")
+    val pb = new ProcessBuilder(Seq(interpreter, script.pathAsString) ++ args: _*)
+      .redirectError(Redirect.INHERIT)
+      .directory(workDir.toJava)
+    val process = pb.start()
+    val procOut = new PrintStream(process.getOutputStream)
     procOut.close()
     process
   }
@@ -53,7 +64,15 @@ class PyProcessRunner extends LazyLogging {
   }
 
   def run(interpreter: String, script: String, workDir: File, timeout: Duration)(implicit sc: Scheduler): Observable[String] = {
-    val startProc: Task[Process] = start(interpreter, script, workDir).memoize
+    runInernal(timeout, start(interpreter, script, workDir))
+  }
+
+  def run(interpreter: String, script: File, args: Seq[String], workDir: File, timeout: Duration)(implicit sc: Scheduler): Observable[String] = {
+    runInernal(timeout, start(interpreter, script, args, workDir))
+  }
+
+  private def runInernal(timeout: Duration, startT: Task[Process])(implicit sc: Scheduler) = {
+    val startProc: Task[Process] = startT.memoize
     val readByLine: Observable[String] = Observable.fromTask(startProc).flatMap(process => chunkedOutput(process))
     val waitResult: Task[Int] = startProc.flatMap(process => result(process, timeout).executeOn(sc))
     val done: Observable[String] = Observable(readByLine, Observable.fromTask(waitResult).flatMap(_ => Observable.empty[String])).concat
