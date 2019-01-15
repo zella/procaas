@@ -64,11 +64,15 @@ workflows:
     jobs:
       - test:
           filters:
+            tags:
+              ignore: /.*/
             branches:
               only: /.*/
       - publish:
           requires:
             - test
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /.*/
