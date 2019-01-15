@@ -64,9 +64,9 @@ workflows:
     jobs:
       - test:
           filters:
-            tags:
-              ignore: /.*/
             branches:
+              only: /.*/
+            tags:
               only: /.*/
       - publish:
           requires:
