@@ -18,7 +18,7 @@ import org.zella.pyaas.proc.model.impl.{AsFilesGrab, _}
 import play.api.libs.json.{Format, JsValue, Json}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunner)
   extends Executor[PyScriptParam, PyResult] with LazyLogging {

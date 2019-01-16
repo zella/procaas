@@ -12,14 +12,14 @@ import monix.execution.Scheduler
 import monix.reactive.Observable
 import org.zella.pyaas.errors.ProcessException
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 class PyProcessRunner extends LazyLogging {
 
   //return started process
-  private def start(interpreter: String, scriptContent: String, workDir: File): Task[Process] = Task {
+  private def start(interpreter: String, scriptContent: String, workDir: File, timeout: Duration): Task[Process] = Task {
     logger.debug("Starting process...")
-    val pb = new ProcessBuilder(interpreter)
+    val pb = new ProcessBuilder("timeout", timeout.toSeconds.toString, interpreter)
       .redirectError(Redirect.INHERIT)
       .directory(workDir.toJava)
     val process = pb.start()
@@ -29,9 +29,9 @@ class PyProcessRunner extends LazyLogging {
     process
   }
 
-  private def start(interpreter: String, script: File, args: Seq[String], workDir: File): Task[Process] = Task {
+  private def start(interpreter: String, script: File, args: Seq[String], workDir: File, timeout: Duration): Task[Process] = Task {
     logger.debug("Starting process...")
-    val pb = new ProcessBuilder(Seq(interpreter, script.pathAsString) ++ args: _*)
+    val pb = new ProcessBuilder(Seq(interpreter, timeout.toSeconds.toString, script.pathAsString) ++ args: _*)
       .redirectError(Redirect.INHERIT)
       .directory(workDir.toJava)
     val process = pb.start()
@@ -43,38 +43,62 @@ class PyProcessRunner extends LazyLogging {
   //emits process output in realtime
   private def chunkedOutput(process: Process): Observable[String] = {
     Observable.fromLinesReader(Task(new BufferedReader(new InputStreamReader(process.getInputStream))))
-      .doOnNext(l => Task(logger.debug(l)))
+      .doOnError(_ => Task {
+        forceStop(process)
+      })
+      .doOnSubscriptionCancel(Task {
+        forceStop(process)
+      })
   }
 
-  private def result(process: Process, timeout: Duration): Task[Int] = Task {
-    logger.debug("Start waiting process...")
-    val completed = process.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS)
-    if (!completed) {
-      try {
-        process.destroyForcibly().waitFor()
-      } catch {
-        case ex: Throwable =>
-          throw new ProcessException("Process timeout. Can't destroy", ex)
-      }
-      throw new ProcessException("Process timeout")
+  private def forceStop(process: Process): Unit = {
+    try {
+      process.destroyForcibly().waitFor()
+    } catch {
+      case ex: Throwable =>
+        throw new ProcessException("Process timeout. Can't destroy", ex)
     }
-    val exitCode = process.exitValue()
-    if (exitCode != 0) throw new ProcessException(s"Incorrect exit code: $exitCode")
-    exitCode
   }
 
-  def run(interpreter: String, script: String, workDir: File, timeout: Duration)(implicit sc: Scheduler): Observable[String] = {
-    runInernal(timeout, start(interpreter, script, workDir))
+  private def result(process: Process, timeout: Duration): Task[Int] =
+    Task {
+      logger.debug("Start waiting process...")
+      val completed = process.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS)
+      logger.debug(s"Process completed: $completed")
+      if (!completed) {
+        try {
+          process.destroyForcibly().waitFor()
+        } catch {
+          case ex: Throwable =>
+            throw new ProcessException("Process timeout. Can't destroy", ex)
+        }
+        throw new ProcessException("Process timeout")
+      }
+      val exitCode = process.exitValue()
+      logger.debug(s"Process completed with $exitCode code")
+      if (exitCode != 0 && exitCode != 124) throw new ProcessException(s"Incorrect exit code: $exitCode")
+      if (exitCode == 124) throw new ProcessException("Process timeout")
+      exitCode
+    }
+
+
+  def run(interpreter: String, script: String, workDir: File, timeout: Duration)
+         (implicit sc: Scheduler): Observable[String] = {
+    runInternal(timeout, None, start(interpreter, script, workDir, timeout))
   }
 
-  def run(interpreter: String, script: File, args: Seq[String], workDir: File, timeout: Duration)(implicit sc: Scheduler): Observable[String] = {
-    runInernal(timeout, start(interpreter, script, args, workDir))
+  def run(interpreter: String, script: File, args: Seq[String], workDir: File, timeout: Duration)
+         (implicit sc: Scheduler): Observable[String] = {
+    runInternal(timeout, Some(script), start(interpreter, script, args, workDir, timeout))
   }
 
-  private def runInernal(timeout: Duration, startT: Task[Process])(implicit sc: Scheduler) = {
+  private def runInternal(timeout: Duration, script: Option[File], startT: Task[Process])(implicit sc: Scheduler) = {
     val startProc: Task[Process] = startT.memoize
     val readByLine: Observable[String] = Observable.fromTask(startProc).flatMap(process => chunkedOutput(process))
     val waitResult: Task[Int] = startProc.flatMap(process => result(process, timeout).executeOn(sc))
+      .doOnCancel(Task(script.foreach(_.delete(true))))
+      .doOnFinish(_ => Task(script.foreach(_.delete(true))))
+
     val done: Observable[String] = Observable(readByLine, Observable.fromTask(waitResult).flatMap(_ => Observable.empty[String])).concat
     done
   }

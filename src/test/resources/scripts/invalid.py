@@ -1,1 +1,1 @@
-some invalid script
+This is not python code

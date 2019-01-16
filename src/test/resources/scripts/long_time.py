@@ -1,10 +1,13 @@
-output = '/home/dru/git/pyass/py/out'
-
-import os
-
 from time import sleep
-sleep(1) #1sec
-
-result = open(os.path.join(output, 'someOutFile'), 'a+')
-result.write('ok')
-result.close()
+print(0, flush=True)
+sleep(1)
+print(1, flush=True)
+sleep(1)
+print(2, flush=True)
+sleep(1)
+print(3, flush=True)
+sleep(1)
+print(4, flush=True)
+sleep(1)
+print(5, flush=True)
+sleep(1)

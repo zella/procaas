@@ -115,7 +115,30 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
     }
 
 
-    "TODO" in { s => }
+    "return 400 and exception with for invalid script" in { s =>
+
+      val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
+        .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/invalid.py"))).toString()))
+        .setMethod("POST")
+
+      val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
+
+      resp.getStatusCode shouldBe 400
+      resp.getResponseBody.contains("ProcessException: Incorrect exit code") shouldBe true
+    }
+
+    "return 400 and timeout with for script execution time greater than timeout" in { s =>
+
+      val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
+        .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/long_time.py"),
+          timeoutMillis = 3000)).toString()))
+        .setMethod("POST")
+
+      val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
+
+      resp.getStatusCode shouldBe 400
+      resp.getResponseBody.contains("ProcessException") shouldBe true
+    }
 
 
   }
