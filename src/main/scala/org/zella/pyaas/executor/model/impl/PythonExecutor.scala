@@ -13,24 +13,25 @@ import org.zella.pyaas.errors.InputException
 import org.zella.pyaas.executor.TaskSchedulers
 import org.zella.pyaas.executor.model.{ExecutionParams, Executor, FileUpload, Params}
 import org.zella.pyaas.net.model.impl.PyResult
-import org.zella.pyaas.proc.PyProcessRunner
 import org.zella.pyaas.proc.model.impl.{AsFilesGrab, _}
+import org.zella.pyaas.proc.runner.ProcessRunner
+import org.zella.pyaas.proc.runner.impl.JProcessRunner
 import play.api.libs.json.{Format, JsValue, Json}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunner)
+class PythonExecutor(conf: PyaasConfig, pr: ProcessRunner = JProcessRunner)
   extends Executor[PyScriptParam, PyResult] with LazyLogging {
 
-  override def execute(param: PyScriptParam, timeout: Duration): Task[(PyResult, Option[WorkDir])] = {
+  override def execute(param: PyScriptParam, timeout: FiniteDuration): Task[(PyResult, Option[WorkDir])] = {
     def runInternal() = {
       implicit val processScheduler = param.scheduler
       param.executionMode match {
         case RunPyBody(script) =>
-          pr.run(conf.pythonInterpreter, script, param.outDir.parent, timeout)
+          pr.runPyInteractive(timeout, conf.pythonInterpreter, script, Some(param.outDir.parent))
         case RunPyFile(file, args) =>
-          pr.run(conf.pythonInterpreter, file, args, param.outDir.parent, timeout)
+          pr.runPy(timeout, conf.pythonInterpreter, file, args, Some(param.outDir.parent), Task(file.delete()))
       }
     }
 
@@ -49,9 +50,8 @@ class PythonExecutor(conf: PyaasConfig, pr: PyProcessRunner = new PyProcessRunne
         new StdoutChunkedPyResultGrabber(runInternal()).grab
       case AsStdout(false) =>
         runInternal()
-          .toListL.map(lines => lines.mkString)
+          .toListL.map(lines => lines.mkString("\n"))
           .flatMap(out => new StdoutPyResultGrabber(out).grab)
-
     }).map((_, Option(param.workDir)))
   }
 

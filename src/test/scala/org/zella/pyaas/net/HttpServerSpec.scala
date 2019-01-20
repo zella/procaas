@@ -17,6 +17,8 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
 
   type FixtureParam = HttpServer
 
+
+  //FIXME copy script to tmp dir
   def withFixture(test: OneArgTest): Outcome = {
     val workDir: File = File.newTemporaryDirectory()
 
@@ -40,6 +42,9 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
       Task.fromFuture(server.closeFuture()).runSyncUnsafe()
     }
   }
+
+
+  private def copyRes(path: String): File = ???
 
   "HttpServer" should {
 
@@ -68,7 +73,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
     /**
       * Should runs with docker daemon
       */
-    "return file for multiple file output script with processing thru docker" ignore { s =>
+    "return file for multiple file output script with processing thru docker" ignore  { s =>
 
       val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
         .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/with_docker.py"),
@@ -101,6 +106,18 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
       resp.getResponseBody shouldBe "2019"
     }
 
+    "return stdout for file script" in { s =>
+
+      val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
+        .addBodyPart(new StringPart("data", Json.toJson(PyParamInput(Resource.getAsString("scripts/simple_stdout.py"))).toString()))
+        .setMethod("POST")
+
+      val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
+
+      resp.getStatusCode shouldBe 200
+      resp.getResponseBody shouldBe "2019"
+    }
+
     "return chunked stdout for stdout script in chunked mode" in { s =>
 
       val svc = url(s"http://localhost:${HttpServerSpec.PORT}/exec_python")
@@ -111,7 +128,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
       val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
 
       resp.getStatusCode shouldBe 200
-      resp.getResponseBody shouldBe "0123"
+      resp.getResponseBody shouldBe "1234"
     }
 
 
@@ -137,7 +154,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
       val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
 
       resp.getStatusCode shouldBe 400
-      resp.getResponseBody.contains("ProcessException") shouldBe true
+      resp.getResponseBody.contains("TimeoutException") shouldBe true
     }
 
 

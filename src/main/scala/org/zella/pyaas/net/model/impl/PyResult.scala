@@ -19,15 +19,19 @@ case class FilePyResult(file: File) extends PyResult with LazyLogging {
 
 }
 
-case class StdoutPyResult(out: String) extends PyResult {
+case class StdoutPyResult(out: String) extends PyResult with  LazyLogging {
 
-  override def write(response: HttpServerResponse): Task[Unit] = Task(response.end(out))
+  override def write(response: HttpServerResponse): Task[Unit] = Task {
+    logger.debug(out)
+    response.end(out)
+  }
 
 }
 
 case class StdoutChunkedPyResult(out: Observable[String]) extends PyResult with LazyLogging {
 
   override def write(response: HttpServerResponse): Task[Unit] = Task {
+    logger.debug("setChunked")
     response.setChunked(true)
   }.flatMap { _ =>
     out.foreachL(line => {
