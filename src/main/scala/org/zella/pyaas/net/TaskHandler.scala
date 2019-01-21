@@ -17,6 +17,7 @@ import scala.util.control.NonFatal
 class TaskHandler[T <: Params, V <: Result](exec: Executor[T, V]) extends Handler[RoutingContext] with LazyLogging {
 
   override def handle(ctx: RoutingContext): Unit = {
+    implicit val sc = TaskSchedulers.io
     //TODO test parse json failure
     exec.prepareInput(
       ctx.fileUploads().map(f => FileUpload(f.fileName(), File(f.uploadedFileName()))).toSeq,
@@ -35,7 +36,7 @@ class TaskHandler[T <: Params, V <: Result](exec: Executor[T, V]) extends Handle
             .end(ExceptionUtils.getStackTrace(e))
           //TODO it's ok?
         case e => ctx.fail(e)
-      }.runAsyncAndForget(TaskSchedulers.io)
+      }.runAsyncAndForget
   }
 }
 
