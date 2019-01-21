@@ -14,4 +14,7 @@
     <logger name="io.netty" level="INFO">
         <appender-ref ref="STDOUT" />
     </logger>
+    <logger name="org.asynchttpclient.netty" level="INFO">
+        <appender-ref ref="STDOUT" />
+    </logger>
 </configuration>

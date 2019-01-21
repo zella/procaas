@@ -19,6 +19,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
 
 
   //FIXME copy script to tmp dir
+  //TODO random port
   def withFixture(test: OneArgTest): Outcome = {
     val workDir: File = File.newTemporaryDirectory()
 
@@ -160,6 +161,8 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar {
 
   }
 }
+
+//TODO use top or htop or other to test processes killing
 
 object HttpServerSpec {
   val PORT = 9477

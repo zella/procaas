@@ -21,7 +21,7 @@ import play.api.libs.json.{Format, JsValue, Json}
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-class PythonExecutor(conf: PyaasConfig, pr: ProcessRunner = JProcessRunner)
+class PythonExecutor(conf: PyaasConfig, pr: ProcessRunner = JProcessRunner())
   extends Executor[PyScriptParam, PyResult] with LazyLogging {
 
   override def execute(param: PyScriptParam, timeout: FiniteDuration): Task[(PyResult, Option[WorkDir])] = {
@@ -121,7 +121,7 @@ case class PyParamInput(scriptBody: String,
                         args: Option[String] = None,
                         zipInputMode: Boolean = false,
                         outPutMode: String = "stdout", //file, zip stdout_chunked //TODO enum
-                        timeoutMillis: Long = 60 * 1000,
+                        timeoutMillis: Long = 60 * 1000, //TODO config
                         computation: String = "io") //cpu, io //TODO describe in config
 
 object PyParamInput {
