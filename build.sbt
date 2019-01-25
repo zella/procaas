@@ -1,8 +1,15 @@
-name := "pyaas"
+name := "procaas"
 
 version := IO.read(new File("version.txt"))
 
 scalaVersion := "2.12.8"
+
+lazy val root = (project in file(".")).
+  enablePlugins(BuildInfoPlugin).
+  settings(
+    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
+    buildInfoPackage := "procaas"
+  )
 
 // META-INF discarding
 assemblyMergeStrategy in assembly := {
@@ -12,10 +19,12 @@ assemblyMergeStrategy in assembly := {
 
 test in assembly := {}
 
-mainClass in assembly := Some("org.zella.pyaas.Runner")
+mainClass in assembly := Some("org.zella.procaas.Runner")
 
 javaOptions in Test += "-Dscala.concurrent.context.numThreads=1 -Dscala.concurrent.context.maxThreads=1"
 
+// https://mvnrepository.com/artifact/commons-io/commons-io
+libraryDependencies += "commons-io" % "commons-io" % "2.6"
 // https://mvnrepository.com/artifact/io.monix/monix-eval
 libraryDependencies += "io.monix" %% "monix-eval" % "3.0.0-RC2"
 // https://mvnrepository.com/artifact/io.monix/monix-reactive
@@ -35,7 +44,9 @@ libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
 // https://mvnrepository.com/artifact/com.github.pathikrit/better-files
 libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.7.0"
 // https://mvnrepository.com/artifact/com.typesafe.play/play-json
-libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.13"
+libraryDependencies += "com.typesafe.play" %% "play-json" % "2.7.0"
+// https://mvnrepository.com/artifact/org.julienrf/play-json-derived-codecs
+libraryDependencies += "org.julienrf" %% "play-json-derived-codecs" % "5.0.0"
 // https://mvnrepository.com/artifact/org.apache.commons/commons-text
 libraryDependencies += "org.apache.commons" % "commons-text" % "1.6"
 // https://mvnrepository.com/artifact/org.apache.commons/commons-collections4

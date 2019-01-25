@@ -9,4 +9,4 @@ print(files)
 assert len(files) == 1
 assert files[0].endswith('.jar')
 jar = os.path.join(path, files[0])
-shutil.copy(jar, 'ci/pyaas.jar')
+shutil.copy(jar, 'ci/procaas.jar')

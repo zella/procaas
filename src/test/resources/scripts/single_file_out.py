@@ -1,10 +1,13 @@
-input = '{{input}}'
-output = '{{output}}'
-
 import os
 
-files = os.listdir(input)
-for f in files:
+input = os.getcwd()
+
+output = os.path.join(os.getcwd(), 'output')
+os.mkdir(output)
+
+input_files = [f for f in os.listdir(input) if os.path.isfile(f)]
+
+for f in input_files:
     content = open(os.path.join(input, f)).read()
     result = open(os.path.join(output, "result.txt"), 'a+')
     result.write(content)

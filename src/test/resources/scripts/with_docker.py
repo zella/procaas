@@ -3,8 +3,10 @@
 import os
 import subprocess
 
-input = '{{input}}'
-output = '{{output}}'
+input = os.getcwd()
+
+output = os.path.join(os.getcwd(), 'output')
+os.mkdir(output)
 
 for f in os.listdir(input):
     if not f.endswith(".png"):
