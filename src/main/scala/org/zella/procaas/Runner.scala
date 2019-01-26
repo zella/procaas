@@ -9,7 +9,9 @@ import monix.execution.Scheduler.Implicits.global
 object Runner extends LazyLogging {
 
   def main(args: Array[String]): Unit = {
-
+    sys.addShutdownHook({
+      logger.info("Server shutdown")
+    })
     val config = new TypesafeConfig(ConfigFactory.load())
 
     val server = new ProcaasHttpServer(config).startT()
