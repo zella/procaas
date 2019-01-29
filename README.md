@@ -52,11 +52,12 @@ Remote worker
 
 ### Api
 
-Here single entry point
+Here single entry point.
 
 **`POST /process`**
 
 It accepts `multipart/form-data` with single json parameter `data` and files.
+Response body represnts process stdout or output file
 
 **Parameters of `data`:**
 
@@ -87,10 +88,12 @@ Example: `{"MY_NAME":"1991","MY_YEAR":"DRU"}`
 
 How pass result of execution:
 
-`stdout` - simple grab stdout  
-`chunkedStdout`- grab and emits stdout by line, chunked transfer encoding  
+`stdout` - simple grab stdout, Content type `text/plain`  
+`chunkedStdout`- grab and emits stdout by line, chunked transfer encoding, `Transfer-Encoding: chunked`  
 `zip`- pack all files(and dirs) inside `{workdir}/output/` folder. There no way to transfer multiple files unpacked(but here no compression)  
 `file` - return single file. Expect process produce singe file, throw error otherwise.
+
+For files modes, content type detects by file extension.
 
 Example: `zip`
 
