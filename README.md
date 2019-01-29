@@ -30,7 +30,7 @@ You can read response without buffering in chunked mode.
 
 Files will be placed in unique working directory and cleaned after execution.
 
-**Read result files**
+**Read produced files**
 
 You can grab files in `{workdir}/output` directory(also in zip mode). Output directory configurable - relative to process workdir
 
