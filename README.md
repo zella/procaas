@@ -3,7 +3,7 @@
 
 Process as service
 
-This project(http server) allows to run process(something like bash over http) by http requests.
+This project(http server) allows to run processes(something like bash over http) by http requests.
 
 ### Feautures 
 
