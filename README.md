@@ -133,7 +133,7 @@ Server configured with env vars(defaults on right side):
 `HTTP_PORT: 8666`  
 `WORK_DIR: /tmp/procaas_workdir` - process-specific dirs created here  
 `DEFAULT_OUTPUT_DIR_NAME: output` - see above  
-`PROCESS_TIMEOUT: 5m` - default process timeout, hocon syntax
+`PROCESS_TIMEOUT: 5m` - default process timeout, hocon syntax  
 `LOG_LEVEL`: INFO
 
 ### Installation variants
