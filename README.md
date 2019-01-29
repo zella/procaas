@@ -68,7 +68,7 @@ Response body represnts process stdout or output file
   **`zipInputMode`** - boolean, required, default = false.
   
   If mode enabled, you should pass single zip file. It will be unpacked to workdir of process. It uses, if you want preserve directory structure.
-If disabled(by default), all files will be stored in workdir. Workdir will be cleaned after execution(sucessfull or not)
+If disabled(by default), all files will be moved to workdir. Workdir will be cleaned after execution(sucessfull or not)
 
   Example: `true`
   
@@ -91,7 +91,7 @@ How pass result of execution:
 `stdout` - simple grab stdout, Content type `text/plain`  
 `chunkedStdout`- grab and emits stdout by line, chunked transfer encoding, `Transfer-Encoding: chunked`  
 `zip`- pack all files(and dirs) inside `{workdir}/output/` folder. There no way to transfer multiple files unpacked(but here no compression)  
-`file` - return single file. Expect process produce singe file, throw error otherwise.
+`file` - return single file. Expect, that process produce singe file, throw error otherwise.
 
 For files modes, content type detects by file extension.
 
@@ -122,6 +122,14 @@ So minimal `data` will be:
 	{
 	   "cmd" : ["echo", "Hello world"]
 	}
+	
+Response:  
+
+    HTTP/1.1 200 OK
+    Content-Length: 11
+    Content-Type: text/plain
+    Hello world`
+	
 	
 #### About errors:
 In case of wrong input parameters or wrong process exit code, 400 will be thrown with stack trace (and 32 stderr lines in case of process failure)
