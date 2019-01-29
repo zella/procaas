@@ -135,9 +135,9 @@ Server configured with env vars(defaults on right side):
 `DEFAULT_OUTPUT_DIR_NAME: output` - see above  
 `PROCESS_TIMEOUT: 5m` - default process timeout, hocon syntax
 
-### Installation
+### Installation variants
 
-1. Run in docker
+**Run in docker**
 
 Here basic image available on docker hub: `zella/procaas`:
 
@@ -151,13 +151,13 @@ Here basic image available on docker hub: `zella/procaas`:
 	
 You can extend it and install what you need, or just use your image - install jdk11 and copy single jar (available in releases TODO).
 
-2. Run standalone executable jar. Required java11 installed.
+**Run standalone executable jar. Required java11 installed.**
 
 java -jar procaas-xxx.jar
 
 ### How to build
 
-Install **scala sbt**
-$cd procaas
-$sbt assembly
-Find procaas-xxx.jar in target/scala-2.12/
+    Install **scala sbt**
+    $cd procaas
+    $sbt assembly
+    Find procaas-xxx.jar in target/scala-2.12/
