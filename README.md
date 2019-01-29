@@ -130,14 +130,14 @@ In case of wrong input parameters or wrong process exit code, 400 will be thrown
 
 Server configured with env vars(defaults on right side):
 
-`HTTP_PORT: 8666`
-`WORK_DIR: /tmp/procaas_workdir` - process-specific dirs created here
-`DEFAULT_OUTPUT_DIR_NAME: output` - see above
+`HTTP_PORT: 8666`  
+`WORK_DIR: /tmp/procaas_workdir` - process-specific dirs created here  
+`DEFAULT_OUTPUT_DIR_NAME: output` - see above  
 `PROCESS_TIMEOUT: 5m` - default process timeout, hocon syntax
 
 ### Installation
 
-1) Run in docker
+1. Run in docker
 
 Here basic image available on docker hub: `zella/procaas`:
 
@@ -151,7 +151,7 @@ Here basic image available on docker hub: `zella/procaas`:
 	
 You can extend it and install what you need, or just use your image - install jdk11 and copy single jar (available in releases TODO).
 
-2) Run standalone executable jar. Required java11 installed.
+2. Run standalone executable jar. Required java11 installed.
 
 java -jar procaas-xxx.jar
 
