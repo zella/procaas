@@ -24,7 +24,7 @@ class CommonProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = SProcessRun
     p.outPutMode match {
       case ChunkedStdout => new StdoutChunkedResultGrabber(runInternal()).grab
       case Stdout => runInternal()
-        .toListL.map(lines => lines.mkString(System.lineSeparator()))
+        .toListL.map(lines => lines.mkString)
         .flatMap(out => new StdoutResultGrabber(out).grab)
       case mode@(ZipFile | SingleFile) =>
         runInternal().completedL.flatMap(_ => new FileResultGrabber(p.workDir / p.outputDir, mode).grab)
