@@ -4,7 +4,7 @@ import monix.eval.Task
 import org.zella.procaas.net.model.Result
 
 /**
-  * Grab result from success process run
+  * Grab result from successful process run
   *
   * @tparam T result type
   */

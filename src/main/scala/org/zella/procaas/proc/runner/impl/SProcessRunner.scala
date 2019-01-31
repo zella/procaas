@@ -96,27 +96,6 @@ class SProcessRunner(io: Scheduler) extends ProcessRunner with LazyLogging {
     runInternal(timeout, cmd, stdin, env, workDir, postProcess) //TODO remove middle layer
   }
 
-  //
-  //
-  //  override def runPyInteractive(timeout: FiniteDuration,
-  //                                interpreter: String,
-  //                                script: String,
-  //                                env: Map[String, String] = Map(),
-  //                                workDir: Option[File])(implicit sc: Scheduler): Observable[String] = {
-  //    runInternal(timeout, interpreter, Some(script), env, workDir, Task.unit)
-  //    //    runInBash(timeout, interpreter, Some(script), workDir, Task.unit)
-  //  }
-  //
-  //  override def runPy(timeout: FiniteDuration,
-  //                     interpreter: String,
-  //                     script: File,
-  //                     args: Seq[String],
-  //                     env: Map[String, String],
-  //                     workDir: Option[File],
-  //                     postProcess: Task[Unit])(implicit sc: Scheduler): Observable[String] = {
-  //    runInternal(timeout, s"$interpreter ${script.pathAsString}", None, env, workDir, postProcess)
-  //    //    runInBash(timeout, s"$interpreter ${script.pathAsString}", None, workDir, Task.unit)
-  //  }
 
   override def runInBash(timeout: FiniteDuration,
                          cmd: String,
@@ -124,8 +103,6 @@ class SProcessRunner(io: Scheduler) extends ProcessRunner with LazyLogging {
                          env: Map[String, String],
                          workDir: Option[File],
                          postProcess: Task[Unit])(implicit sc: Scheduler): Observable[String] = {
-    //    if (env.nonEmpty) throw new UnsupportedOperationException("env in bash mode not implemented yet")
-    //    runInternal(timeout, Seq("/bin/sh", "-c", cmd), stdin, env, workDir, Task.unit)
     runCmd(timeout, Seq("/bin/sh", "-c", cmd), stdin, env, workDir, Task.unit)
   }
 

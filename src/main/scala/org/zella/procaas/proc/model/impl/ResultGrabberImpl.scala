@@ -9,7 +9,6 @@ import org.zella.procaas.executor.{OutputMode, ZipFile}
 import org.zella.procaas.net.model.impl.{FileProcResult, StdoutChunkedProcResult, StdoutProcResult}
 import org.zella.procaas.proc.model.ResultGrabber
 
-//TODO unit test
 class FileResultGrabber(out: File, outputMode: OutputMode) extends ResultGrabber[FileProcResult] with LazyLogging {
 
   override def grab: Task[FileProcResult] = {
@@ -19,10 +18,8 @@ class FileResultGrabber(out: File, outputMode: OutputMode) extends ResultGrabber
       outputMode match {
         case _ if files.isEmpty =>
           throw new GrabResultException(s"No result files")
-        //        case zip(_) | file if out.list.map(_.toJava.length()).sum > binaryLimitBytes =>
-        //          throw new GrabResultException(s"Binary result limit higher that $binaryLimitBytes bytes")
+
         case ZipFile =>
-          //TODO rule should be described on higher level
           val result = out.parent / (out.parent.name + ".zip")
           result.createIfNotExists(asDirectory = false)
           out.zipTo(result, 0) //TODO compression level in input
@@ -50,14 +47,3 @@ class StdoutResultGrabber(out: String) extends ResultGrabber[StdoutProcResult] {
 
 
 }
-
-//trait HowToGrab
-//
-//sealed trait AsFilesGrab extends HowToGrab
-//
-//sealed trait AsStdoutGrab extends HowToGrab
-//
-////no compression
-//case class AsZip(compressionLevel: Int = 0) extends AsFilesGrab
-//case object AsSingleFile extends AsFilesGrab
-//case class AsStdout(chunked: Boolean) extends AsStdoutGrab

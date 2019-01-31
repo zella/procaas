@@ -16,7 +16,6 @@ class TaskHandler[T <: ExecParams, V <: Result](exec: Executor[T, V]) extends Ha
 
   override def handle(ctx: RoutingContext): Unit = {
     implicit val sc = TaskSchedulers.io
-    //TODO test parse json failure
     exec.prepareInput(
       ctx.fileUploads().map(f => FileUpload(f.fileName(), File(f.uploadedFileName()))).toSeq,
       ctx.request().getFormAttribute("data").map(Json.parse)
