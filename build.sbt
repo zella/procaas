@@ -57,3 +57,6 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % Test
 libraryDependencies += "org.mockito" %% "mockito-scala" % "1.0.8" % Test
 
 libraryDependencies += "org.dispatchhttp" %% "dispatch-core" % "1.0.0" % Test
+// https://mvnrepository.com/artifact/org.asynchttpclient/async-http-client
+libraryDependencies += "org.asynchttpclient" % "async-http-client" % "2.7.0" % Test
+

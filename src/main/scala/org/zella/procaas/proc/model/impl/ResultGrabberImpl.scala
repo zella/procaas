@@ -3,10 +3,11 @@ package org.zella.procaas.proc.model.impl
 import better.files.File
 import com.typesafe.scalalogging.LazyLogging
 import monix.eval.Task
-import monix.reactive.Observable
-import org.zella.procaas.errors.{GrabResultException, ProcaasException}
+import monix.reactive.subjects.ConcurrentSubject
+import monix.reactive.{Observable, Observer}
+import org.zella.procaas.errors.GrabResultException
 import org.zella.procaas.executor.{OutputMode, ZipFile}
-import org.zella.procaas.net.model.impl.{FileProcResult, StdoutChunkedProcResult, StdoutProcResult}
+import org.zella.procaas.net.model.impl.{FileProcResult, StdoutChunkedProcResult, StdoutProcResult, WebSocketTwoWayResult}
 import org.zella.procaas.proc.model.ResultGrabber
 
 class FileResultGrabber(out: File, outputMode: OutputMode) extends ResultGrabber[FileProcResult] with LazyLogging {
@@ -45,5 +46,10 @@ class StdoutResultGrabber(out: String) extends ResultGrabber[StdoutProcResult] {
     StdoutProcResult(out)
   }
 
+}
+
+class WebsocketResultGrabber(in: ConcurrentSubject[String, String], out: Observable[String]) extends ResultGrabber[WebSocketTwoWayResult] {
+
+  override def grab: Task[WebSocketTwoWayResult] = Task(WebSocketTwoWayResult(in, out))
 
 }
