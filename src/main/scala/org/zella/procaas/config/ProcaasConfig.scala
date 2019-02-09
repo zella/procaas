@@ -16,4 +16,8 @@ trait ProcaasConfig {
 
   def processTimeout: FiniteDuration
 
+  def stdoutBufferWindow:FiniteDuration
+
+  def stdoutBufferSize: Int
+
 }

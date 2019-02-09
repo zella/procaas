@@ -16,7 +16,7 @@ trait ProcessRunner {
                 env: Map[String, String] = Map(),
                 workDir: Option[File] = None,
                 postProcess: Task[Unit] = Task.unit)
-               (implicit sc: Scheduler): Observable[String]
+               (implicit sc: Scheduler): Observable[Char]
 
 
   def runCmd(timeout: FiniteDuration,
@@ -25,7 +25,7 @@ trait ProcessRunner {
              env: Map[String, String] = Map(),
              workDir: Option[File] = None,
              postProcess: Task[Unit] = Task.unit)
-            (implicit sc: Scheduler): Observable[String]
+            (implicit sc: Scheduler): Observable[Char]
 
 
   def runInteractive(timeout: FiniteDuration,
@@ -33,6 +33,6 @@ trait ProcessRunner {
                      env: Map[String, String],
                      workDir: Option[File],
                      postProcess: Task[Unit] = Task.unit)
-                    (implicit sc: Scheduler): Task[(ConcurrentSubject[String, String], Observable[String])]
+                    (implicit sc: Scheduler): Task[(Observer[String], Observable[Char])]
 
 }

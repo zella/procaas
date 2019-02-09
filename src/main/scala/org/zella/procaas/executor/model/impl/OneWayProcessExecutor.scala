@@ -13,7 +13,7 @@ import org.zella.procaas.net.model.impl.OneWayProcResult
 import org.zella.procaas.proc.model.impl._
 import org.zella.procaas.proc.runner.ProcessRunner
 import org.zella.procaas.proc.runner.impl.SProcessRunner
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Json
 
 class OneWayProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = SProcessRunner())
   extends Executor[OneWayProcessParams, OneWayProcResult] with LazyLogging {
@@ -22,6 +22,9 @@ class OneWayProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = SProcessRun
     def runInternal() = {
       implicit val processScheduler: Scheduler = p.scheduler
       pr.runCmd(p.timeout, p.cmd, p.stdin, p.envs, Some(p.workDir))
+        .bufferTimedAndCounted(conf.stdoutBufferWindow, conf.stdoutBufferSize)
+        .filter(_.nonEmpty)
+        .map(_.mkString)
     }
 
     p.outPutMode match {

@@ -7,12 +7,12 @@ import monix.execution.Scheduler
 import org.zella.procaas.config.ProcaasConfig
 import org.zella.procaas.errors.InputException
 import org.zella.procaas.executor._
-import org.zella.procaas.executor.model.{Executor, FileUpload}
+import org.zella.procaas.executor.model.Executor
 import org.zella.procaas.net.model.impl.TwoWayProcResult
 import org.zella.procaas.proc.model.impl._
 import org.zella.procaas.proc.runner.ProcessRunner
 import org.zella.procaas.proc.runner.impl.SProcessRunner
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Json
 
 class TwoWayProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = SProcessRunner())
   extends Executor[TwoWayProcessParams, TwoWayProcResult] with LazyLogging {
@@ -22,7 +22,13 @@ class TwoWayProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = SProcessRun
     implicit val processScheduler: Scheduler = p.scheduler
 
     pr.runInteractive(p.timeout, p.cmd, p.envs, Some(p.workDir))
-      .flatMap { case (in, out) => new WebsocketResultGrabber(in, out).grab }
+      .flatMap { case (in, out) => new WebsocketResultGrabber(
+        in,
+        out.bufferTimedAndCounted(conf.stdoutBufferWindow, conf.stdoutBufferSize)
+          .filter(_.nonEmpty)
+          .map(_.mkString)
+      ).grab
+      }
   }
 
   override def prepareInput(ctx: RoutingContext): Task[(TwoWayProcessParams, Option[WorkDir])] =

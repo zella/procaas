@@ -48,7 +48,7 @@ class StdoutResultGrabber(out: String) extends ResultGrabber[StdoutProcResult] {
 
 }
 
-class WebsocketResultGrabber(in: ConcurrentSubject[String, String], out: Observable[String]) extends ResultGrabber[WebSocketTwoWayResult] {
+class WebsocketResultGrabber(in: Observer[String], out: Observable[String]) extends ResultGrabber[WebSocketTwoWayResult] {
 
   override def grab: Task[WebSocketTwoWayResult] = Task(WebSocketTwoWayResult(in, out))
 

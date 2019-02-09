@@ -56,7 +56,7 @@ case class StdoutChunkedProcResult(out: Observable[String]) extends OneWayProcRe
   })
 }
 
-case class WebSocketTwoWayResult(in: ConcurrentSubject[String, String], out: Observable[String]) extends TwoWayProcResult with LazyLogging {
+case class WebSocketTwoWayResult(in: Observer[String], out: Observable[String]) extends TwoWayProcResult with LazyLogging {
 
   override def network(ctx: RoutingContext): Task[Unit] = Task {
     val isClosed = new AtomicBoolean(false)

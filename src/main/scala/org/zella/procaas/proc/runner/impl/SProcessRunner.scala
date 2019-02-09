@@ -27,22 +27,22 @@ class SProcessRunner(io: Scheduler) extends ProcessRunner with LazyLogging {
                   stdIn: Option[String],
                   env: Map[String, String],
                   workDir: Option[File],
-                  postProcess: Task[Unit])(implicit scheduler: Scheduler): Observable[String] = Observable.defer {
+                  postProcess: Task[Unit])(implicit scheduler: Scheduler): Observable[Char] = Observable.defer {
 
-    val stdout = ConcurrentSubject.replay[String](io)
+    val stdout = ConcurrentSubject.replay[Char](io)
 
     val stderr = Collections.synchronizedCollection(new CircularFifoQueue[String](32)) //TODO conf
 
     val processIO = new ProcessIO(in => {
       stdIn.foreach { std =>
         val procOut = new PrintStream(in)
-        std.lines.forEach(s => procOut.println(s))
+        procOut.print(std)
         procOut.close()
       }
     }, out => {
-      val br = new BufferedReader(new InputStreamReader(out))
-      Stream.continually(br.readLine()).takeWhile(_ != null).foreach(l => {
-        stdout.onNext(l + System.lineSeparator())
+      val ir = new InputStreamReader(out)
+      Stream.continually(ir.read()).takeWhile(_ != -1).foreach(l => {
+        stdout.onNext(l.toChar)
       })
     }, err => {
       val br = new BufferedReader(new InputStreamReader(err))
@@ -90,9 +90,9 @@ class SProcessRunner(io: Scheduler) extends ProcessRunner with LazyLogging {
                              cmd: Seq[String],
                              env: Map[String, String],
                              workDir: Option[File],
-                             postProcess: Task[Unit])(implicit scheduler: Scheduler): Task[(ConcurrentSubject[String, String], Observable[String])] = Task {
+                             postProcess: Task[Unit])(implicit scheduler: Scheduler): Task[(Observer[String], Observable[Char])] = Task {
 
-    val stdout = ConcurrentSubject.replay[String](io)
+    val stdout = ConcurrentSubject.replay[Char](io)
 
     val stderr = Collections.synchronizedCollection(new CircularFifoQueue[String](32)) //TODO conf
 
@@ -111,9 +111,10 @@ class SProcessRunner(io: Scheduler) extends ProcessRunner with LazyLogging {
           procOut.flush()
         })
     }, out => {
+      //TODO buffer Observable[Char] to Observable[String] with window ~30-50ms (24 frames per second)
       val ir = new InputStreamReader(out)
       Stream.continually(ir.read()).takeWhile(_ != -1).foreach(l => {
-        stdout.onNext(l.toChar.toString) //TODO char
+        stdout.onNext(l.toChar)
       })
     }, err => {
       val br = new BufferedReader(new InputStreamReader(err))
@@ -164,7 +165,7 @@ class SProcessRunner(io: Scheduler) extends ProcessRunner with LazyLogging {
                       stdin: Option[String],
                       env: Map[String, String],
                       workDir: Option[File],
-                      postProcess: Task[Unit])(implicit sc: Scheduler): Observable[String] = {
+                      postProcess: Task[Unit])(implicit sc: Scheduler): Observable[Char] = {
     runInternal(timeout, cmd, stdin, env, workDir, postProcess) //TODO remove middle layer
   }
 
@@ -172,7 +173,7 @@ class SProcessRunner(io: Scheduler) extends ProcessRunner with LazyLogging {
                               cmd: Seq[String],
                               env: Map[String, String],
                               workDir: Option[File],
-                              postProcess: Task[Unit])(implicit sc: Scheduler): Task[(ConcurrentSubject[String, String], Observable[String])] = {
+                              postProcess: Task[Unit])(implicit sc: Scheduler): Task[(Observer[String], Observable[Char])] = {
     runInternalInteractive(timeout, cmd, env, workDir, postProcess) //TODO remove middle layer
   }
 
@@ -182,7 +183,7 @@ class SProcessRunner(io: Scheduler) extends ProcessRunner with LazyLogging {
                          stdin: Option[String],
                          env: Map[String, String],
                          workDir: Option[File],
-                         postProcess: Task[Unit])(implicit sc: Scheduler): Observable[String] = {
+                         postProcess: Task[Unit])(implicit sc: Scheduler): Observable[Char] = {
     runCmd(timeout, Seq("/bin/sh", "-c", cmd), stdin, env, workDir, Task.unit)
   }
 

@@ -39,6 +39,8 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar wi
     when(conf.defaultOutputDirName).thenReturn("output")
     when(conf.httpPort).thenReturn(Port)
     when(conf.processTimeout).thenReturn(5 minutes)
+    when(conf.stdoutBufferSize).thenReturn(128)
+    when(conf.stdoutBufferWindow).thenReturn(10 millis)
     //TODO test requestTimeout
 
     val server = new ProcaasHttpServer(conf).startT().runSyncUnsafe()
@@ -195,6 +197,31 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar wi
 
       val result = out
           .doOnNext(l => Task(logger.info(l)))
+        .toListL.runSyncUnsafe().mkString
+      println(result)
+
+      result shouldBe "onetwothree"
+    }
+
+    "experimetns" ignore {s =>
+
+      val bReq = Dsl.asyncHttpClient()
+        .prepareGet(s"ws://localhost:${s.actualPort()}/process_interactive")
+        .addQueryParam("data",Json.toJson(TwoWayProcessInput(Seq("/bin/bash")
+        )).toString() )
+
+      val (in, out) = TestWsClient.connect(bReq)
+
+      in.onNext("echo test" + System.lineSeparator())
+      Thread.sleep(1000)
+      in.onNext("uname -r" + System.lineSeparator())
+//      in.onNext("python3" + "\n")
+//      Thread.sleep(1000)
+//      in.onNext("print('hello from python, flush = True')" + System.lineSeparator())
+//      in.onNext("echo AAAAAAAAAAAAA" + System.lineSeparator())
+
+      val result = out
+        .doOnNext(l => Task(logger.info(l)))
         .toListL.runSyncUnsafe().mkString
       println(result)
 

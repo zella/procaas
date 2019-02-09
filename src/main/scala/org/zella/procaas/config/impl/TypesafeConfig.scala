@@ -19,4 +19,8 @@ class TypesafeConfig(conf: Config) extends ProcaasConfig {
   override val defaultOutputDirName: String = conf.getString("process.defaultOutputDirName")
 
   override val processTimeout: FiniteDuration = FiniteDuration(conf.getDuration("process.timeout").toMillis, TimeUnit.MILLISECONDS)
+
+  override val stdoutBufferWindow: FiniteDuration =  FiniteDuration(conf.getDuration("process.stdout.bufferWindow").toMillis, TimeUnit.MILLISECONDS)
+
+  override val stdoutBufferSize: Int = conf.getInt("process.stdout.buffer")
 }
