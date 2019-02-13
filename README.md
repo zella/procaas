@@ -15,7 +15,7 @@ Examples:
 `["python", "-c", "yourscript", "arg1"]`
 `["yourBinary"]`
     
-**Bidirectional communication with process over websockets*
+**Bidirectional communication with process over websockets**
 
 Usefull for live terminal session
 
