@@ -1,8 +1,8 @@
 package org.zella.procaas.net.model
 
-import io.vertx.scala.core.http.HttpServerResponse
+import io.vertx.scala.ext.web.RoutingContext
 import monix.eval.Task
 
 trait Result {
-  def write(response: HttpServerResponse): Task[Unit]
+  def network(ctx: RoutingContext): Task[Unit]
 }

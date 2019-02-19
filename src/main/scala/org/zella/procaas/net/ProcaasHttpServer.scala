@@ -6,7 +6,7 @@ import io.vertx.scala.ext.web.Router
 import io.vertx.scala.ext.web.handler.BodyHandler
 import monix.eval.Task
 import org.zella.procaas.config.ProcaasConfig
-import org.zella.procaas.executor.model.impl.CommonProcessExecutor
+import org.zella.procaas.executor.model.impl._
 import procaas.BuildInfo
 
 
@@ -18,8 +18,9 @@ class ProcaasHttpServer(conf: ProcaasConfig) extends LazyLogging {
       val router = Router.router(vertx)
       router.route.handler(BodyHandler.create()
         .setDeleteUploadedFilesOnEnd(true))
-      router.post("/process").handler(new TaskHandler(new CommonProcessExecutor(conf)))
+      router.post("/process").handler(new TaskHandler(new OneWayProcessExecutor(conf)))
       router.get("/about").handler(ctx => ctx.response().end(BuildInfo.version))
+      router.get("/process_interactive").handler(new TaskHandler(new TwoWayProcessExecutor(conf)))
       vertx
         .createHttpServer()
         .requestHandler(router.accept _)

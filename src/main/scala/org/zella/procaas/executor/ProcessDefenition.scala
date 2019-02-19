@@ -14,7 +14,25 @@ import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
 
 
-case class CommonProcessParams(cmd: Seq[String],
+trait BasicProcessParams extends ExecParams {
+  def cmd: Seq[String]
+  def envs: Map[String, String]
+  def timeout: FiniteDuration
+  def scheduler: Scheduler
+  def workDir: File
+}
+
+trait OneWayProcessParams extends BasicProcessParams {
+  def stdin: Option[String]
+  def zipInputMode: Boolean
+  def outPutMode: OutputMode
+  def outputDir: String
+}
+
+trait TwoWayProcessParams extends BasicProcessParams
+
+
+case class OneWayProcessParamsImpl(cmd: Seq[String],
                                zipInputMode: Boolean,
                                stdin: Option[String],
                                envs: Map[String, String],
@@ -22,22 +40,19 @@ case class CommonProcessParams(cmd: Seq[String],
                                outputDir: String,
                                timeout: FiniteDuration,
                                scheduler: Scheduler,
-                               workDir: File) extends ExecParams
+                               workDir: File) extends OneWayProcessParams
 
-/**
-  *
-  * Http request body
-  *
-  * @param cmd
-  * @param zipInputMode
-  * @param stdin
-  * @param envs process env variables
-  * @param outPutMode
-  * @param outputDir
-  * @param timeoutMillis
-  * @param computation
-  */
-case class CommonProcessInput(cmd: Seq[String],
+case class TwoWayProcessParamsImpl(cmd: Seq[String],
+                               zipInputMode: Boolean,
+                               envs: Map[String, String],
+                               outPutMode: OutputMode,
+                               outputDir: String,
+                               timeout: FiniteDuration,
+                               scheduler: Scheduler,
+                               workDir: File) extends TwoWayProcessParams
+
+
+case class OneWayProcessInput(cmd: Seq[String],
                               zipInputMode: Option[Boolean] = None,
                               stdin: Option[String] = None,
                               envs: Option[Map[String, String]] = None,
@@ -45,12 +60,11 @@ case class CommonProcessInput(cmd: Seq[String],
                               outputDir: Option[String] = None,
                               timeoutMillis: Option[Long] = None,
                               computation: Option[String] = None
-                             ) {
-
-  def fillDefaults(config: ProcaasConfig): Try[CommonProcessParams] = Try {
+                             ){
+  def fillDefaults(config: ProcaasConfig): Try[OneWayProcessParams] = Try {
 
     val uid = UUID.randomUUID().toString
-    CommonProcessParams(cmd,
+    OneWayProcessParamsImpl(cmd,
       zipInputMode.getOrElse(false),
       stdin,
       envs.getOrElse(Map.empty),
@@ -73,9 +87,47 @@ case class CommonProcessInput(cmd: Seq[String],
   }
 }
 
-object CommonProcessInput {
-  implicit val jsonFormat = Json.format[CommonProcessInput]
+case class TwoWayProcessInput(cmd: Seq[String],
+                              zipInputMode: Option[Boolean] = None,
+                              envs: Option[Map[String, String]] = None,
+                              outPutMode: Option[String] = None,
+                              outputDir: Option[String] = None,
+                              timeoutMillis: Option[Long] = None,
+                              computation: Option[String] = None
+                             ){
+  def fillDefaults(config: ProcaasConfig): Try[TwoWayProcessParams] = Try {
+
+    val uid = UUID.randomUUID().toString
+    TwoWayProcessParamsImpl(cmd,
+      zipInputMode.getOrElse(false),
+      envs.getOrElse(Map.empty),
+      outPutMode.getOrElse("stdout") match {
+        case "stdout" => Stdout
+        case "chunkedStdout" => ChunkedStdout
+        case "zip" => ZipFile
+        case "file" => SingleFile
+        case _ => throw new InputException("Invalid output mode")
+      },
+      outputDir.getOrElse(config.defaultOutputDirName),
+      FiniteDuration(timeoutMillis.getOrElse(config.processTimeout.toMillis), TimeUnit.MILLISECONDS),
+      computation.getOrElse("io") match {
+        case "io" => TaskSchedulers.io
+        case "cpu" => TaskSchedulers.cpu
+        case _ => throw new InputException("Invalid computation mode")
+      },
+      config.workDir / uid
+    )
+  }
 }
+
+
+object TwoWayProcessInput {
+  implicit val jsonFormat = Json.format[TwoWayProcessInput]
+}
+object OneWayProcessInput {
+  implicit val jsonFormat = Json.format[OneWayProcessInput]
+}
+
 
 
 sealed trait OutputMode
