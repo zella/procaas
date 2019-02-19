@@ -1,9 +1,9 @@
 # procaas
 [![CircleCI](https://circleci.com/gh/zella/procaas/tree/master.svg?style=svg)](https://circleci.com/gh/zella/procaas/tree/master)
 
-Process as service
+Process as service (Work in progress)
 
-This project (http server) allows to run processes(something like bash over http) by http requests.
+This project (http server) allows to run processes(something like bash over http) by http requests and web sockets.
 
 ### Features 
 
@@ -15,6 +15,9 @@ Examples:
 `["python", "-c", "yourscript", "arg1"]`
 `["yourBinary"]`
     
+**Bidirectional communication with process over websockets**
+
+Usefull for live terminal session
 
 **Read stdout, also in chunked mode**
 
