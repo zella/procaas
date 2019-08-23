@@ -1,5 +1,6 @@
 package org.zella.procaas.net.model.impl
 
+import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 
 import better.files.File
@@ -7,6 +8,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.vertx.core.Handler
 import io.vertx.core.buffer.Buffer
 import io.vertx.scala.core.http.HttpServerResponse
+import io.vertx.scala.core.streams.Pump
 import io.vertx.scala.ext.web.RoutingContext
 import monix.eval.Task
 import monix.reactive.subjects.ConcurrentSubject
@@ -28,25 +30,25 @@ case class FileProcResult(file: File) extends OneWayProcResult with LazyLogging 
 
 }
 
-case class StdoutProcResult(out: String) extends OneWayProcResult with LazyLogging {
+case class StdoutProcResult(data: Array[Byte]) extends OneWayProcResult with LazyLogging {
 
   override def network(ctx: RoutingContext): Task[Unit] = Task {
-    logger.debug(out)
-    ctx.response.end(out)
+    logger.debug(new String(data))
+    ctx.response.end(Buffer.buffer(data))
   }
 
 }
 
-case class StdoutChunkedProcResult(out: Observable[String]) extends OneWayProcResult with LazyLogging {
+case class StdoutChunkedProcResult(out: Observable[Array[Byte]]) extends OneWayProcResult with LazyLogging {
 
   override def network(ctx: RoutingContext): Task[Unit] = Task {
     logger.debug("setChunked")
     ctx.response.setChunked(true)
   }.flatMap { _ =>
     out.
-      foreachL(line => {
-        logger.debug(line)
-        ctx.response.write(line)
+      foreachL(data => {
+        logger.debug(new String(data))
+        ctx.response.write(Buffer.buffer(data))
       })
   }.doOnFinish(exOpt => Task {
     exOpt match {
@@ -56,15 +58,15 @@ case class StdoutChunkedProcResult(out: Observable[String]) extends OneWayProcRe
   })
 }
 
-case class WebSocketTwoWayResult(in: Observer[String], out: Observable[String]) extends TwoWayProcResult with LazyLogging {
+case class WebSocketTwoWayResult(in: Observer[Array[Byte]], out: Observable[Array[Byte]]) extends TwoWayProcResult with LazyLogging {
 
   override def network(ctx: RoutingContext): Task[Unit] = Task {
     val isClosed = new AtomicBoolean(false)
     logger.debug("Upgrading to websocket...")
     ctx.request().upgrade()
-      .textMessageHandler((s: String) => {
-        logger.debug("Receive on ws server:" + s)
-        in.onNext(s)
+      .handler(data => {
+        logger.debug("From client:" + data.toString())
+        in.onNext(data.getBytes)
       })
       .closeHandler(_ => {
         isClosed.set(true)
@@ -74,7 +76,8 @@ case class WebSocketTwoWayResult(in: Observer[String], out: Observable[String]) 
     out.
       foreachL(l => {
         logger.debug("Sent to client:" + l)
-        socket.writeFinalTextFrame(l)
+        //TODO writeQueueFull?
+        socket.write(Buffer.buffer(l))
       })
       .doOnFinish(exOpt => Task {
         logger.debug("Closing websocket...")

@@ -77,28 +77,28 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar wi
     }
 
 
-    /**
-      * Should runs with docker daemon
-      */
-    "return file for multiple file output script with processing thru docker" ignore { s =>
-
-      val svc = url(s"http://localhost:${s.actualPort()}/process")
-        .addBodyPart(new StringPart("data", Json.toJson(OneWayProcessInput(
-          Seq(Python, "-c", Resource.getAsString("scripts/with_docker.py")),
-          outPutMode = Some("zip"),
-          timeoutMillis = Some(5000)
-        )).toString()))
-        .addBodyPart(new FilePart("someName1", File(Resource.getUrl("input/image1.png")).toJava))
-        .addBodyPart(new FilePart("someName2", File(Resource.getUrl("input/image2.png")).toJava))
-        .setMethod("POST")
-
-      val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
-
-      resp.getStatusCode shouldBe 200
-      resp.getContentType shouldBe "application/zip"
-      resp.getHeader("content-length") shouldBe "67339"
-
-    }
+//    /**
+//      * Should runs with docker daemon
+//      */
+//    "return file for multiple file output script with processing thru docker" ignore { s =>
+//
+//      val svc = url(s"http://localhost:${s.actualPort()}/process")
+//        .addBodyPart(new StringPart("data", Json.toJson(OneWayProcessInput(
+//          Seq(Python, "-c", Resource.getAsString("scripts/with_docker.py")),
+//          outPutMode = Some("zip"),
+//          timeoutMillis = Some(5000)
+//        )).toString()))
+//        .addBodyPart(new FilePart("someName1", File(Resource.getUrl("input/image1.png")).toJava))
+//        .addBodyPart(new FilePart("someName2", File(Resource.getUrl("input/image2.png")).toJava))
+//        .setMethod("POST")
+//
+//      val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
+//
+//      resp.getStatusCode shouldBe 200
+//      resp.getContentType shouldBe "application/zip"
+//      resp.getHeader("content-length") shouldBe "67339"
+//
+//    }
 
     "return stdout for stdout script" in { s =>
 
@@ -146,7 +146,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar wi
       val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
 
       resp.getStatusCode shouldBe 400
-      resp.getResponseBody.contains("has exited with 1") shouldBe true
+      resp.getResponseBody.contains("This is not python code") shouldBe true
     }
 
     "return 400 and timeout with for script execution time greater than timeout" in { s =>
@@ -176,12 +176,12 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar wi
 
       val resp = Task.fromFuture(Http.default(svc)).runSyncUnsafe()
       resp.getStatusCode shouldBe 200 //because chunked mode
-      resp.getResponseBody.contains("ProcessException:") shouldBe true
+      resp.getResponseBody.contains("ProcessTimeoutException:") shouldBe true
     }
 
 
     //TODO No timeout?
-    "ws test basic TODO" in { s =>
+    "ws test basic TODO" ignore { s =>
 
       val bReq = Dsl.asyncHttpClient()
         .prepareGet(s"ws://localhost:${s.actualPort()}/process_interactive")
@@ -228,11 +228,11 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar wi
       result shouldBe "onetwothree"
     }
 
-    "ws test with closing TODO" in { s =>
+    "ws test with closing TODO" ignore { s =>
 
     }
 
-    "ws test with py exception TODO" in { s =>
+    "ws test with py exception TODO" ignore { s =>
 
     }
 

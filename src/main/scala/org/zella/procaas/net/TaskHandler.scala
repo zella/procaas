@@ -1,11 +1,12 @@
 package org.zella.procaas.net
 
+import com.github.zella.rxprocess2.errors.ProcessException
 import com.typesafe.scalalogging.LazyLogging
 import io.vertx.core.Handler
 import io.vertx.scala.ext.web.RoutingContext
 import monix.eval.Task
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.zella.procaas.errors.ProcaasException
+import org.zella.procaas.errors.MakakusException
 import org.zella.procaas.executor.TaskSchedulers
 import org.zella.procaas.executor.model.{ExecParams, Executor}
 import org.zella.procaas.net.model.Result
@@ -23,8 +24,7 @@ class TaskHandler[T <: ExecParams, V <: Result](exec: Executor[T, V]) extends Ha
         })
       }
       .onErrorRecover {
-        case e: ProcaasException =>
-          logger.error("Failure", e)
+        case e @ (_:MakakusException | _:ProcessException) => logger.error("Failure", e)
           ctx.response()
             .setStatusCode(400)
             .end(ExceptionUtils.getStackTrace(e))

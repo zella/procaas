@@ -11,10 +11,10 @@ import org.zella.procaas.executor.model.Executor
 import org.zella.procaas.net.model.impl.TwoWayProcResult
 import org.zella.procaas.proc.model.impl._
 import org.zella.procaas.proc.runner.ProcessRunner
-import org.zella.procaas.proc.runner.impl.SProcessRunner
+import org.zella.procaas.proc.runner.impl.NuProcessBasedRunner
 import play.api.libs.json.Json
 
-class TwoWayProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = SProcessRunner())
+class TwoWayProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = new NuProcessBasedRunner)
   extends Executor[TwoWayProcessParams, TwoWayProcResult] with LazyLogging {
 
   override def execute(p: TwoWayProcessParams): Task[TwoWayProcResult] = {
@@ -24,9 +24,10 @@ class TwoWayProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = SProcessRun
     pr.runInteractive(p.timeout, p.cmd, p.envs, Some(p.workDir))
       .flatMap { case (in, out) => new WebsocketResultGrabber(
         in,
+        //TODO test performance and disabling it
         out.bufferTimedAndCounted(conf.stdoutBufferWindow, conf.stdoutBufferSize)
           .filter(_.nonEmpty)
-          .map(_.mkString)
+          .map(_.flatten.toArray)
       ).grab
       }
   }

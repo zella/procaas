@@ -23,12 +23,16 @@ mainClass in assembly := Some("org.zella.procaas.Runner")
 
 javaOptions in Test += "-Dscala.concurrent.context.numThreads=1 -Dscala.concurrent.context.maxThreads=1"
 
+resolvers ++= Seq(
+  "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
+)
+libraryDependencies += "com.github.zella" % "rx-process2" % "0.2.0-SNAPSHOT"
 // https://mvnrepository.com/artifact/commons-io/commons-io
 libraryDependencies += "commons-io" % "commons-io" % "2.6"
 // https://mvnrepository.com/artifact/io.monix/monix-eval
-libraryDependencies += "io.monix" %% "monix-eval" % "3.0.0-RC2"
+libraryDependencies += "io.monix" %% "monix-eval" % "3.0.0-RC3"
 // https://mvnrepository.com/artifact/io.monix/monix-reactive
-libraryDependencies += "io.monix" %% "monix-reactive" % "3.0.0-RC2"
+libraryDependencies += "io.monix" %% "monix-reactive" % "3.0.0-RC3"
 // https://mvnrepository.com/artifact/com.typesafe/config
 libraryDependencies += "com.typesafe" % "config" % "1.3.3"
 // https://mvnrepository.com/artifact/io.vertx/vertx-lang-scala-stack

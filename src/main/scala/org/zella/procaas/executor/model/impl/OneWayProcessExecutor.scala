@@ -5,6 +5,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.vertx.scala.ext.web.RoutingContext
 import monix.eval.Task
 import monix.execution.Scheduler
+import monix.reactive.Observable
 import org.zella.procaas.config.ProcaasConfig
 import org.zella.procaas.errors.InputException
 import org.zella.procaas.executor._
@@ -12,25 +13,26 @@ import org.zella.procaas.executor.model.{Executor, FileUpload}
 import org.zella.procaas.net.model.impl.OneWayProcResult
 import org.zella.procaas.proc.model.impl._
 import org.zella.procaas.proc.runner.ProcessRunner
-import org.zella.procaas.proc.runner.impl.SProcessRunner
+import org.zella.procaas.proc.runner.impl.NuProcessBasedRunner
 import play.api.libs.json.Json
 
-class OneWayProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = SProcessRunner())
+class OneWayProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = new NuProcessBasedRunner)
   extends Executor[OneWayProcessParams, OneWayProcResult] with LazyLogging {
 
   override def execute(p: OneWayProcessParams): Task[OneWayProcResult] = {
-    def runInternal() = {
+    def runInternal(): Observable[Array[Byte]] = {
       implicit val processScheduler: Scheduler = p.scheduler
-      pr.runCmd(p.timeout, p.cmd, p.stdin, p.envs, Some(p.workDir))
+      pr.run(p.timeout, p.cmd, p.stdin.map(_.getBytes), p.envs, Some(p.workDir))
+        //TODO remove it???
         .bufferTimedAndCounted(conf.stdoutBufferWindow, conf.stdoutBufferSize)
         .filter(_.nonEmpty)
-        .map(_.mkString)
+        .map(_.flatten.toArray)
     }
 
     p.outPutMode match {
       case ChunkedStdout => new StdoutChunkedResultGrabber(runInternal()).grab
       case Stdout => runInternal()
-        .toListL.map(lines => lines.mkString)
+        .toListL.map(_.flatten.toArray)
         .flatMap(out => new StdoutResultGrabber(out).grab)
       case mode@(ZipFile | SingleFile) =>
         runInternal().completedL.flatMap(_ => new FileResultGrabber(p.workDir / p.outputDir, mode).grab)
