@@ -8,7 +8,7 @@ import monix.execution.Scheduler
 import org.zella.procaas.config.ProcaasConfig
 import org.zella.procaas.errors.InputException
 import org.zella.procaas.executor.model.ExecParams
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
@@ -56,7 +56,7 @@ case class OneWayProcessInput(cmd: Seq[String],
                               zipInputMode: Option[Boolean] = None,
                               stdin: Option[String] = None,
                               envs: Option[Map[String, String]] = None,
-                              outPutMode: Option[String] = None,
+                              outputMode: Option[String] = None,
                               outputDir: Option[String] = None,
                               timeoutMillis: Option[Long] = None,
                               computation: Option[String] = None
@@ -68,7 +68,7 @@ case class OneWayProcessInput(cmd: Seq[String],
       zipInputMode.getOrElse(false),
       stdin,
       envs.getOrElse(Map.empty),
-      outPutMode.getOrElse("stdout") match {
+      outputMode.getOrElse("stdout") match {
         case "stdout" => Stdout
         case "chunkedStdout" => ChunkedStdout
         case "zip" => ZipFile
@@ -122,10 +122,10 @@ case class TwoWayProcessInput(cmd: Seq[String],
 
 
 object TwoWayProcessInput {
-  implicit val jsonFormat = Json.format[TwoWayProcessInput]
+  implicit val jsonFormat: Format[TwoWayProcessInput] = Json.format[TwoWayProcessInput]
 }
 object OneWayProcessInput {
-  implicit val jsonFormat = Json.format[OneWayProcessInput]
+  implicit val jsonFormat: Format[OneWayProcessInput] = Json.format[OneWayProcessInput]
 }
 
 

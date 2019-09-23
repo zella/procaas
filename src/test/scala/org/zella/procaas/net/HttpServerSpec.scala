@@ -61,7 +61,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar wi
       val svc = url(s"http://localhost:${s.actualPort()}/process")
         .addBodyPart(new StringPart("data", Json.toJson(OneWayProcessInput(
           Seq(Python, "-c", Resource.getAsString("scripts/single_file_out.py")),
-          outPutMode = Option("file"),
+          outputMode = Option("file"),
           timeoutMillis = Some(5000)
         )).toString()))
         .addBodyPart(new FilePart("someName1", File(Resource.getUrl("input/1.txt")).toJava))
@@ -121,7 +121,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar wi
       val svc = url(s"http://localhost:${s.actualPort()}/process")
         .addBodyPart(new StringPart("data", Json.toJson(OneWayProcessInput(
           Seq(Python, "-c", Resource.getAsString("scripts/chunked_stdout.py")),
-          outPutMode = Some("chunkedStdout"),
+          outputMode = Some("chunkedStdout"),
           timeoutMillis = Some(5000)
         )).toString()))
         .setMethod("POST")
@@ -169,7 +169,7 @@ class HttpServerSpec extends fixture.WordSpec with Matchers with MockitoSugar wi
       val svc = url(s"http://localhost:${s.actualPort()}/process")
         .addBodyPart(new StringPart("data", Json.toJson(OneWayProcessInput(
           Seq(Python, "-c", Resource.getAsString("scripts/chunked_stdout.py")),
-          outPutMode = Some("chunkedStdout"),
+          outputMode = Some("chunkedStdout"),
           timeoutMillis = Some(2000)
         )).toString()))
         .setMethod("POST")

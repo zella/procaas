@@ -87,7 +87,7 @@ Environment variables for process
 
 Example: `{"MY_NAME":"1991","MY_YEAR":"DRU"}`
 
-**`outPutMode`** - string, optional, default = stdout
+**`outputMode`** - string, optional, default = stdout
 
 How pass result of execution:
 

@@ -48,7 +48,9 @@ class OneWayProcessExecutor(conf: ProcaasConfig, pr: ProcessRunner = new NuProce
       Task.fromTry(params.as[OneWayProcessInput].fillDefaults(conf)).flatMap { procDef =>
         Task {
           procDef.workDir.createIfNotExists(asDirectory = true, createParents = true)
-
+          if (procDef.outPutMode.equals(SingleFile) || procDef.outPutMode.equals(ZipFile)) {
+            (procDef.workDir / procDef.outputDir).createIfNotExists(asDirectory = true)
+          }
           if (files.nonEmpty) {
             if (procDef.zipInputMode && files.size > 1 && !files.head.originalName.takeRight(3).equalsIgnoreCase("zip"))
               throw new InputException("Invalid zipInputMode, should be one zip file")
