@@ -2,8 +2,8 @@ import os
 
 input = os.getcwd()
 
+#output created by service
 output = os.path.join(os.getcwd(), 'output')
-os.mkdir(output)
 
 input_files = [f for f in os.listdir(input) if os.path.isfile(f)]
 
